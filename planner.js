@@ -636,44 +636,123 @@ function setupEventListeners() {
         });
     }
 
-    // Touch Interactivity: 1-finger draw/drag, 2-finger pinch-to-zoom
+    // Touch Interactivity: 1-finger draw/drag, 2-finger pinch-to-zoom & pan
+    let isPinching = false;
     let initialPinchDistance = 0;
-    let initialPinchZoom = 1.0;
-    
+    let initialPinchScale = 1.0;
+    let initialPinchCenter = { x: 0, y: 0 };
+    let initialBgState = { x: 0, y: 0, scale: 1.0 };
+    let initialCanvasPan = { x: 0, y: 0 };
+
+    function getTouchInfo(t1, t2) {
+        const dx = t1.clientX - t2.clientX;
+        const dy = t1.clientY - t2.clientY;
+        return {
+            dist: Math.hypot(dx, dy),
+            center: {
+                clientX: (t1.clientX + t2.clientX) / 2,
+                clientY: (t1.clientY + t2.clientY) / 2
+            }
+        };
+    }
+
     canvas.addEventListener("touchstart", (e) => {
-        if (e.touches.length === 2) {
+        if (e.touches.length >= 2) {
             e.preventDefault();
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            initialPinchDistance = Math.hypot(dx, dy);
-            initialPinchZoom = canvasUserZoom;
+            isPinching = true;
+            isDrawing = false;
+            isDraggingElement = false;
+            isDraggingBg = false;
+            isResizingTarget = false;
+            arrowPreview = null;
+            brushPreview = null;
+
+            const touchInfo = getTouchInfo(e.touches[0], e.touches[1]);
+            initialPinchDistance = touchInfo.dist;
+            initialPinchCenter = touchInfo.center;
+
+            if (isAlignMode && bgImage) {
+                initialBgState = { x: bgX, y: bgY, scale: bgScale };
+            } else {
+                initialPinchScale = canvasUserZoom;
+                initialCanvasPan = { x: canvasPanX, y: canvasPanY };
+            }
         } else if (e.touches.length === 1) {
+            isPinching = false;
             handleMouseDown(e);
         }
     }, { passive: false });
-    
+
     canvas.addEventListener("touchmove", (e) => {
-        if (e.touches.length === 2) {
+        if (e.touches.length >= 2) {
             e.preventDefault();
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            const currentDist = Math.hypot(dx, dy);
+            const touchInfo = getTouchInfo(e.touches[0], e.touches[1]);
             if (initialPinchDistance > 0) {
-                const factor = currentDist / initialPinchDistance;
-                canvasUserZoom = Math.max(0.5, Math.min(3.5, initialPinchZoom * factor));
-                updateCanvasTransform();
+                const scaleFactor = touchInfo.dist / initialPinchDistance;
+                const panDeltaX = touchInfo.center.clientX - initialPinchCenter.clientX;
+                const panDeltaY = touchInfo.center.clientY - initialPinchCenter.clientY;
+
+                if (isAlignMode && bgImage) {
+                    // Zoom only the uploaded base screenshot, keeping the marker boundaries fixed!
+                    const coords = getCanvasCoords({
+                        clientX: initialPinchCenter.clientX,
+                        clientY: initialPinchCenter.clientY
+                    });
+                    const mouseX = coords.x;
+                    const mouseY = coords.y;
+                    const bgMouseX = (mouseX - initialBgState.x) / initialBgState.scale;
+                    const bgMouseY = (mouseY - initialBgState.y) / initialBgState.scale;
+
+                    const newScale = Math.max(0.1, Math.min(6, initialBgState.scale * scaleFactor));
+                    bgScale = newScale;
+                    bgX = mouseX - bgMouseX * newScale + (panDeltaX / (canvasBaseScale * canvasUserZoom));
+                    bgY = mouseY - bgMouseY * newScale + (panDeltaY / (canvasBaseScale * canvasUserZoom));
+                    draw();
+                } else {
+                    // Normal planning mode: zoom & pan the entire canvas view smoothly
+                    canvasUserZoom = Math.max(0.5, Math.min(3.5, initialPinchScale * scaleFactor));
+                    canvasPanX = initialCanvasPan.x + panDeltaX;
+                    canvasPanY = initialCanvasPan.y + panDeltaY;
+                    updateCanvasTransform();
+                }
             }
-        } else if (e.touches.length === 1) {
+        } else if (e.touches.length === 1 && !isPinching) {
             handleMouseMove(e);
         }
     }, { passive: false });
-    
+
     canvas.addEventListener("touchend", (e) => {
-        if (e.touches.length < 2) {
+        if (e.touches.length === 0) {
+            isPinching = false;
             initialPinchDistance = 0;
+            handleMouseUp();
+        } else if (e.touches.length === 1) {
+            isPinching = true;
+            isDrawing = false;
+            isDraggingElement = false;
         }
-        handleMouseUp();
     }, { passive: false });
+
+    // Smooth Mobile Touch Scrolling for Accordion Units List
+    const accordionContainer = document.getElementById("accordionCategories");
+    if (accordionContainer) {
+        let touchStartY = 0;
+        let touchStartScrollTop = 0;
+        
+        accordionContainer.addEventListener("touchstart", (e) => {
+            if (e.touches.length === 1) {
+                touchStartY = e.touches[0].clientY;
+                touchStartScrollTop = accordionContainer.scrollTop;
+            }
+        }, { passive: true });
+        
+        accordionContainer.addEventListener("touchmove", (e) => {
+            if (e.touches.length === 1) {
+                const deltaY = touchStartY - e.touches[0].clientY;
+                accordionContainer.scrollTop = touchStartScrollTop + deltaY;
+            }
+        }, { passive: true });
+    }
 
     // Mobile Landscape Right Sidebar Toggles
     const rightSidebar = document.getElementById("rightSidebar");
