@@ -5,7 +5,7 @@ const ICON_SIZE = 36;
 const TILE_SCALE_X = 20.84; // 1 Tile Radius Horizontal = (1297 / 44) / sqrt(2) = 20.84 px
 const TILE_SCALE_Y = 15.68; // 1 Tile Radius Vertikal   = (976 / 44) / sqrt(2)  = 15.68 px
 const ISO_Y_RATIO = 0.7524; // Rasio belah ketupat CoC (15.68 / 20.84 = 976 / 1297)
-const ASSETS_BASE_URL = "https://clashfox.com";
+const ASSETS_BASE_URL = "assets";
 
 // Spell & Equipment AoE Radius Settings (in tiles)
 const SPELL_RADII = {
@@ -1866,19 +1866,11 @@ function drawUnitIcon(el, isSelected) {
     ctx.closePath();
     ctx.clip();
     
-    if (!el._exportMode && img && img.complete && img.naturalWidth > 0) {
+    if (img && img.complete && img.naturalWidth > 0) {
         ctx.drawImage(img, el.x - currentRadius, el.y - currentRadius, currentRadius * 2, currentRadius * 2);
     } else {
-        // Fallback: colored circle with unit name initial (used in export mode to avoid CORS taint)
         ctx.fillStyle = "#222d42";
         ctx.fillRect(el.x - currentRadius, el.y - currentRadius, currentRadius * 2, currentRadius * 2);
-        // Draw unit name abbreviation inside the circle
-        ctx.fillStyle = "#ffffff";
-        const abbrev = (el.name || "?").substring(0, 3).toUpperCase();
-        ctx.font = `bold ${currentRadius * 0.7}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(abbrev, el.x, el.y);
     }
     
     ctx.restore();
@@ -1990,61 +1982,17 @@ function downloadPlan() {
     selectedElement = null;
     draw();
     
-    // Export PNG — try direct export first, fallback to icon-placeholder re-render if canvas is tainted
-    try {
-        canvas.toBlob(blob => {
-            if (!blob) {
-                // Blob is null if canvas is tainted by cross-origin images
-                downloadWithFallback();
-                return;
-            }
-            triggerBlobDownload(blob);
-        }, "image/png", 0.95);
-    } catch (err) {
-        // SecurityError: canvas tainted by cross-origin icon images
-        downloadWithFallback();
-    }
-}
-
-function downloadWithFallback() {
-    // Re-render to offscreen canvas with icon placeholders instead of cross-origin images
-    const offscreen = document.createElement("canvas");
-    offscreen.width = CANVAS_WIDTH;
-    offscreen.height = CANVAS_HEIGHT;
-    const offCtx = offscreen.getContext("2d");
-    
-    // Temporarily swap ctx so all draw functions render to offscreen canvas
-    const origCtx = ctx;
-    ctx = offCtx;
-    
-    // Flag icon elements to use placeholder mode (skip drawImage)
-    elements.forEach(el => { if (el.type === Tools.ICON) el._exportMode = true; });
-    
-    draw();
-    
-    // Restore
-    elements.forEach(el => { delete el._exportMode; });
-    ctx = origCtx;
-    draw(); // Restore main canvas display
-    
-    try {
-        offscreen.toBlob(blob => {
-            if (!blob) {
-                alert("Gagal membuat gambar. Coba lagi.");
-                return;
-            }
-            triggerBlobDownload(blob);
-        }, "image/png", 0.95);
-    } catch (err) {
-        alert("Download gagal. Coba lagi.");
-    }
-}
-
-function triggerBlobDownload(blob) {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.download = `coc-attack-plan-${Date.now()}.png`;
-    link.href = url;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 100);
+    // Export PNG — all images are local (same-origin), no CORS taint
+    canvas.toBlob(blob => {
+        if (!blob) {
+            alert("Gagal membuat gambar. Coba lagi.");
+            return;
+        }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.download = `coc-attack-plan-${Date.now()}.png`;
+        link.href = url;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+    }, "image/png", 0.95);
 }
