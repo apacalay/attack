@@ -151,7 +151,6 @@ const markerImage = new Image();
 markerImage.src = "marker.webp"; // Loaded locally since it exists in the same folder
 
 const splashImage = new Image();
-splashImage.crossOrigin = "anonymous";
 splashImage.src = ASSETS_BASE_URL + "/attack_planner.webp";
 
 // Placement Counter for Deployment Order
@@ -317,7 +316,6 @@ function renderAccordionCategories() {
             
             const img = document.createElement("img");
             img.className = "unit-icon";
-            img.crossOrigin = "anonymous";
             img.src = imageUrl;
             img.loading = "lazy";
             img.alt = name;
@@ -1819,7 +1817,6 @@ function drawUnitIcon(el, isSelected) {
     
     if (!img) {
         img = new Image();
-        img.crossOrigin = "anonymous";
         img.onload = () => {
             draw();
         };
@@ -1869,11 +1866,19 @@ function drawUnitIcon(el, isSelected) {
     ctx.closePath();
     ctx.clip();
     
-    if (img && img.complete && img.naturalWidth > 0) {
+    if (!el._exportMode && img && img.complete && img.naturalWidth > 0) {
         ctx.drawImage(img, el.x - currentRadius, el.y - currentRadius, currentRadius * 2, currentRadius * 2);
     } else {
+        // Fallback: colored circle with unit name initial (used in export mode to avoid CORS taint)
         ctx.fillStyle = "#222d42";
         ctx.fillRect(el.x - currentRadius, el.y - currentRadius, currentRadius * 2, currentRadius * 2);
+        // Draw unit name abbreviation inside the circle
+        ctx.fillStyle = "#ffffff";
+        const abbrev = (el.name || "?").substring(0, 3).toUpperCase();
+        ctx.font = `bold ${currentRadius * 0.7}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(abbrev, el.x, el.y);
     }
     
     ctx.restore();
@@ -1985,23 +1990,61 @@ function downloadPlan() {
     selectedElement = null;
     draw();
     
-    // Export PNG
+    // Export PNG — try direct export first, fallback to icon-placeholder re-render if canvas is tainted
     try {
         canvas.toBlob(blob => {
+            if (!blob) {
+                // Blob is null if canvas is tainted by cross-origin images
+                downloadWithFallback();
+                return;
+            }
+            triggerBlobDownload(blob);
+        }, "image/png", 0.95);
+    } catch (err) {
+        // SecurityError: canvas tainted by cross-origin icon images
+        downloadWithFallback();
+    }
+}
+
+function downloadWithFallback() {
+    // Re-render to offscreen canvas with icon placeholders instead of cross-origin images
+    const offscreen = document.createElement("canvas");
+    offscreen.width = CANVAS_WIDTH;
+    offscreen.height = CANVAS_HEIGHT;
+    const offCtx = offscreen.getContext("2d");
+    
+    // Temporarily swap ctx so all draw functions render to offscreen canvas
+    const origCtx = ctx;
+    ctx = offCtx;
+    
+    // Flag icon elements to use placeholder mode (skip drawImage)
+    elements.forEach(el => { if (el.type === Tools.ICON) el._exportMode = true; });
+    
+    draw();
+    
+    // Restore
+    elements.forEach(el => { delete el._exportMode; });
+    ctx = origCtx;
+    draw(); // Restore main canvas display
+    
+    try {
+        offscreen.toBlob(blob => {
             if (!blob) {
                 alert("Gagal membuat gambar. Coba lagi.");
                 return;
             }
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.download = `coc-attack-plan-${Date.now()}.png`;
-            link.href = url;
-            link.click();
-            
-            setTimeout(() => URL.revokeObjectURL(url), 100);
+            triggerBlobDownload(blob);
         }, "image/png", 0.95);
     } catch (err) {
-        console.error("Download failed (canvas tainted):", err);
-        alert("Download gagal karena gambar dari server eksternal. Coba refresh halaman dan ulangi.");
+        alert("Download gagal. Coba lagi.");
     }
+}
+
+function triggerBlobDownload(blob) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = `coc-attack-plan-${Date.now()}.png`;
+    link.href = url;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 100);
 }
