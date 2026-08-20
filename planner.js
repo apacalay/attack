@@ -662,6 +662,7 @@ function setupEventListeners() {
     let initialPinchCenter = { x: 0, y: 0 };
     let initialBgState = { x: 0, y: 0, scale: 1.0 };
     let initialCanvasPan = { x: 0, y: 0 };
+    let touchCooldown = false; // Prevents 1-finger action right after pinch
 
     function getTouchInfo(t1, t2) {
         const dx = t1.clientX - t2.clientX;
@@ -681,13 +682,19 @@ function setupEventListeners() {
     touchSurface.addEventListener("touchstart", (e) => {
         if (e.touches.length >= 2) {
             e.preventDefault();
+            
+            // Cancel any ongoing 1-finger action cleanly
+            if (isDrawing || isDraggingElement || isDraggingBg || isResizingTarget) {
+                isDrawing = false;
+                isDraggingElement = false;
+                isDraggingBg = false;
+                isResizingTarget = false;
+                arrowPreview = null;
+                brushPreview = null;
+            }
+            
             isPinching = true;
-            isDrawing = false;
-            isDraggingElement = false;
-            isDraggingBg = false;
-            isResizingTarget = false;
-            arrowPreview = null;
-            brushPreview = null;
+            touchCooldown = true;
 
             const touchInfo = getTouchInfo(e.touches[0], e.touches[1]);
             initialPinchDistance = touchInfo.dist;
@@ -699,14 +706,19 @@ function setupEventListeners() {
                 initialPinchScale = canvasUserZoom;
                 initialCanvasPan = { x: canvasPanX, y: canvasPanY };
             }
-        } else if (e.touches.length === 1 && e.target === canvas) {
-            isPinching = false;
-            handleMouseDown(e);
+        } else if (e.touches.length === 1) {
+            // Only allow 1-finger draw if not in cooldown after a pinch
+            if (touchCooldown || isPinching) {
+                return; // Ignore — user is still releasing from a pinch gesture
+            }
+            if (e.target === canvas) {
+                handleMouseDown(e);
+            }
         }
     }, { passive: false });
 
     touchSurface.addEventListener("touchmove", (e) => {
-        if (e.touches.length >= 2) {
+        if (e.touches.length >= 2 && isPinching) {
             e.preventDefault();
             const touchInfo = getTouchInfo(e.touches[0], e.touches[1]);
             if (initialPinchDistance > 0) {
@@ -728,20 +740,26 @@ function setupEventListeners() {
                     updateCanvasTransform();
                 }
             }
-        } else if (e.touches.length === 1 && !isPinching && e.target === canvas) {
+        } else if (e.touches.length === 1 && !isPinching && !touchCooldown && e.target === canvas) {
             handleMouseMove(e);
         }
     }, { passive: false });
 
     touchSurface.addEventListener("touchend", (e) => {
         if (e.touches.length === 0) {
-            isPinching = false;
-            initialPinchDistance = 0;
-            if (e.target === canvas) handleMouseUp();
-        } else if (e.touches.length === 1) {
-            isPinching = true;
-            isDrawing = false;
-            isDraggingElement = false;
+            // All fingers lifted — fully reset state
+            if (isPinching || touchCooldown) {
+                isPinching = false;
+                initialPinchDistance = 0;
+                // Brief cooldown to prevent accidental 1-finger action on lift
+                setTimeout(() => { touchCooldown = false; }, 120);
+            } else {
+                if (e.target === canvas) handleMouseUp();
+            }
+        } else if (e.touches.length === 1 && isPinching) {
+            // Went from 2 fingers to 1: keep pinching state, don't start drawing
+            // Re-initialize pinch from current single finger position for smooth re-entry
+            e.preventDefault();
         }
     }, { passive: false });
 
@@ -842,8 +860,9 @@ function setTool(tool) {
         const alignBtn = document.getElementById("alignBtn");
         const banner = document.getElementById("alignBanner");
         if (alignBtn) {
-            alignBtn.innerText = "Align Base Grid";
+            alignBtn.innerHTML = '<span class="btn-text">Align Grid</span>';
             alignBtn.classList.remove("btn-primary");
+            alignBtn.classList.add("btn-secondary");
         }
         if (banner) banner.style.display = "none";
         updateBoundaryBtnUI();
@@ -891,9 +910,16 @@ function loadBaseImageFile(file) {
             isAlignMode = true;
             showMarkerOverlay = true;
             updateBoundaryBtnUI();
-            document.getElementById("alignBtn").innerText = "Lock Grid & Start Drawing";
-            document.getElementById("alignBtn").classList.add("btn-primary");
-            document.getElementById("alignBanner").style.display = "flex";
+            
+            const alignBtn = document.getElementById("alignBtn");
+            if (alignBtn) {
+                alignBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span class="btn-text">Lock Grid & Start Drawing</span>';
+                alignBtn.classList.remove("btn-secondary");
+                alignBtn.classList.add("btn-primary");
+            }
+            
+            const banner = document.getElementById("alignBanner");
+            if (banner) banner.style.display = "flex";
             
             draw();
         };
@@ -910,16 +936,22 @@ function toggleAlignMode() {
     const banner = document.getElementById("alignBanner");
     
     if (isAlignMode) {
-        alignBtn.innerText = "Lock Grid & Start Drawing";
-        alignBtn.classList.add("btn-primary");
-        banner.style.display = "flex";
+        if (alignBtn) {
+            alignBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span class="btn-text">Lock Grid & Start Drawing</span>';
+            alignBtn.classList.remove("btn-secondary");
+            alignBtn.classList.add("btn-primary");
+        }
+        if (banner) banner.style.display = "flex";
         showMarkerOverlay = true;
         updateBoundaryBtnUI();
         setTool(Tools.SELECT); // Force select tool for aligning
     } else {
-        alignBtn.innerText = "Align Base Grid";
-        alignBtn.classList.remove("btn-primary");
-        banner.style.display = "none";
+        if (alignBtn) {
+            alignBtn.innerHTML = '<span class="btn-text">Align Grid</span>';
+            alignBtn.classList.remove("btn-primary");
+            alignBtn.classList.add("btn-secondary");
+        }
+        if (banner) banner.style.display = "none";
         showMarkerOverlay = false;
         updateBoundaryBtnUI();
     }
