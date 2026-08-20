@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <title>Clash of Clans Tactical Attack Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Rencanakan serangan taktis Clash of Clans Anda secara interaktif dengan grid boundaries dan unit maker." />
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <!-- CSS Styles -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- Header Dashboard -->
+    <header>
+        <div class="logo-section">
+            <h1><i class="fa-solid fa-crosshairs"></i> CoC <span>Attack Planner</span></h1>
+            <div id="alignBanner" class="align-banner">
+                <i class="fa-solid fa-circle-exclamation"></i> Grid Alignment Mode Aktif
+            </div>
+        </div>
+        
+        <div class="header-controls">
+            <!-- Hidden input for file selection -->
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+            <button class="btn" id="uploadBtn">
+                <i class="fa-solid fa-image"></i> Upload Base Screenshot
+            </button>
+            <button class="btn btn-secondary" id="alignBtn">
+                Align Base Grid
+            </button>
+            <button class="btn btn-secondary" id="toggleBoundaryBtn">
+                <i class="fa-solid fa-border-all"></i> Toggle Boundary
+            </button>
+            <button class="btn btn-primary" id="downloadBtn">
+                <i class="fa-solid fa-circle-arrow-down"></i> Download Plan
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <div class="app-container">
+        
+        <!-- Left Sidebar: Drawing & Action Tools -->
+        <aside class="sidebar left-sidebar">
+            <div class="tool-group">
+                <button class="tool-btn active" data-tool="select" data-tooltip="Pilih & Pindahkan (Esc)">
+                    <i class="fa-solid fa-arrow-pointer"></i>
+                </button>
+                <button class="tool-btn" data-tool="brush" data-tooltip="Coretan / Brush Bebas">
+                    <i class="fa-solid fa-paintbrush"></i>
+                </button>
+                <button class="tool-btn" data-tool="arrow" data-tooltip="Panah Arah Serangan (2 Grid)">
+                    <i class="fa-solid fa-arrow-right-long"></i>
+                </button>
+                <button class="tool-btn" data-tool="xmark" data-tooltip="Target Plus Bangunan (+)">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <button class="tool-btn" data-tool="text" data-tooltip="Tambahkan Catatan Teks">
+                    <i class="fa-solid fa-font"></i>
+                </button>
+                <button class="tool-btn" data-tool="eraser" data-tooltip="Penghapus Marker">
+                    <i class="fa-solid fa-eraser"></i>
+                </button>
+            </div>
+            
+            <!-- Tool Settings (Color & Actions) -->
+            <div class="tool-settings">
+                <div class="color-palette">
+                    <!-- Crimson Red -->
+                    <div class="color-swatch active" data-color="#ef4444" style="background-color: #ef4444;"></div>
+                    <!-- Radiant Orange -->
+                    <div class="color-swatch" data-color="#f97316" style="background-color: #f97316;"></div>
+                    <!-- Emerald Green -->
+                    <div class="color-swatch" data-color="#22c55e" style="background-color: #22c55e;"></div>
+                    <!-- Lightning Blue -->
+                    <div class="color-swatch" data-color="#3b82f6" style="background-color: #3b82f6;"></div>
+                    <!-- Ghost White -->
+                    <div class="color-swatch" data-color="#ffffff" style="background-color: #ffffff;"></div>
+                    <!-- Obsidian Black -->
+                    <div class="color-swatch" data-color="#000000" style="background-color: #000000;"></div>
+                </div>
+                
+                <div class="tool-group" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                    <button class="tool-btn" id="undoBtn" data-tooltip="Undo (Ctrl+Z)">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    <button class="tool-btn" id="redoBtn" data-tooltip="Redo (Ctrl+Y)">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                    <button class="tool-btn" id="clearBtn" data-tooltip="Bersihkan Semua">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                    <button class="tool-btn" id="helpBtn" onclick="document.getElementById('helpModal').classList.add('show')" data-tooltip="Panduan Cepat">
+                        <i class="fa-solid fa-circle-question"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Center Canvas Workspace -->
+        <main class="workspace">
+            <!-- Drag and drop base image overlay detector -->
+            <div class="drag-overlay" id="dragOverlay">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p>Lepaskan tangkapan layar base CoC untuk di-upload</p>
+            </div>
+            
+            <!-- Scaling Container for Canvas -->
+            <div class="canvas-container">
+                <canvas id="plannerCanvas"></canvas>
+            </div>
+            
+            <!-- Floating Indicators & Controls -->
+            <div class="floating-controls">
+                <div class="floater">
+                    <span>Zoom:</span>
+                    <strong class="zoom-indicator" id="zoomPercentage">100%</strong>
+                </div>
+                <div class="floater zoom-button-group">
+                    <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out (Scroll Down)"><i class="fa-solid fa-minus"></i></button>
+                    <button class="zoom-btn" id="zoomResetBtn" title="Fit to Screen"><i class="fa-solid fa-expand"></i> Fit</button>
+                    <button class="zoom-btn" id="zoomInBtn" title="Zoom In (Scroll Up)"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div class="floater">
+                    <span>Tip:</span>
+                    <strong>Scroll mouse untuk Zoom</strong>
+                </div>
+            </div>
+            
+            <!-- Popover Text Input -->
+            <div class="text-popover" id="textPopover">
+                <input type="text" id="popoverInput" placeholder="Tulis catatan taktis..." />
+                <button class="btn btn-primary" id="popoverSave" style="padding: 6px 12px;"><i class="fa-solid fa-check"></i></button>
+                <button class="btn" id="popoverCancel" style="padding: 6px 12px;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </main>
+        
+        <!-- Right Sidebar: CoC Units Selection Panel -->
+        <aside class="sidebar right-sidebar">
+            <div class="search-container">
+                <input type="text" id="unitSearch" class="search-input" placeholder="Cari unit pasukan/spell..." />
+            </div>
+            
+            <!-- Scrollable Category Tabs -->
+            <div class="tabs-container" id="tabsContainer">
+                <!-- Programmatically generated tabs -->
+            </div>
+            
+            <!-- Units grid selector -->
+            <div class="units-grid" id="unitsGrid">
+                <!-- Programmatically generated items -->
+            </div>
+        </aside>
+        
+    </div>
+
+    <!-- Help & Keyboard Shortcuts Modal -->
+    <div class="modal-overlay" id="helpModal" onclick="this.classList.remove('show')">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Panduan Singkat Attack Planner</h2>
+                <button class="modal-close" onclick="document.getElementById('helpModal').classList.remove('show')">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>1. Unggah Base Screenshot:</strong> Seret (drag & drop) gambar base CoC Anda ke kanvas tengah, atau gunakan tombol upload.</p>
+                <p><strong>2. Sesuaikan Grid Boundaries:</strong> Posisikan grid isometric agar sejajar dengan base. Geser base menggunakan drag mouse, dan perbesar/perkecil menggunakan scroll wheel mouse. Jika sudah sejajar, klik tombol <strong>"Lock Grid"</strong>.</p>
+                <p><strong>3. Buat Strategi:</strong> Gunakan menu kiri untuk memilih tool pena/panah taktis atau tambahkan catatan teks, lalu gunakan panel kanan untuk menaruh pasukan, spell, dan hero dengan urutan serang otomatis.</p>
+                
+                <div class="hotkey-list" style="margin-top: 16px;">
+                    <h3>Pintasan Keyboard (Hotkeys):</h3>
+                    <div class="hotkey-item">
+                        <span>Undo / Urungkan</span>
+                        <span class="hotkey-key">Ctrl + Z</span>
+                    </div>
+                    <div class="hotkey-item">
+                        <span>Redo / Ulangi</span>
+                        <span class="hotkey-key">Ctrl + Y</span>
+                    </div>
+                    <div class="hotkey-item">
+                        <span>Hapus Marker Terpilih</span>
+                        <span class="hotkey-key">Delete / Backspace</span>
+                    </div>
+                    <div class="hotkey-item">
+                        <span>Batal / Deselect Tool</span>
+                        <span class="hotkey-key">Escape</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Controller -->
+    <script src="planner.js"></script>
+</body>
+</html>
