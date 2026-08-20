@@ -455,25 +455,44 @@ function setupEventListeners() {
         });
     }
     
-    // Undo / Redo / Clear
-    document.getElementById("undoBtn").addEventListener("click", undo);
-    document.getElementById("redoBtn").addEventListener("click", redo);
-    document.getElementById("clearBtn").addEventListener("click", clearCanvas);
+    // Undo / Redo / Clear / Download
+    const undoBtn = document.getElementById("undoBtn");
+    const redoBtn = document.getElementById("redoBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
     
-    // Download Plan
-    document.getElementById("downloadBtn").addEventListener("click", downloadPlan);
+    if (undoBtn) undoBtn.addEventListener("click", undo);
+    if (redoBtn) redoBtn.addEventListener("click", redo);
+    if (clearBtn) clearBtn.addEventListener("click", clearCanvas);
+    if (downloadBtn) downloadBtn.addEventListener("click", downloadPlan);
+    // Alignment Banner Extra Buttons (+, -, Reset)
+    const alignZoomIn = document.getElementById("alignZoomIn");
+    const alignZoomOut = document.getElementById("alignZoomOut");
+    const alignReset = document.getElementById("alignReset");
     
-    // Search
-    const searchInput = document.getElementById("unitSearch");
-    if (searchInput) {
-        searchInput.addEventListener("input", (e) => {
-            const activeTab = document.querySelector(".tab.active");
-            if (!activeTab) return;
-            const categoryName = activeTab.innerText;
-            const cat = unitCategories.find(c => c.name === categoryName);
-            if (cat) {
-                renderCategoryUnits(cat, e.target.value);
-            }
+    if (alignZoomIn) {
+        alignZoomIn.addEventListener("click", () => {
+            if (!bgImage) return;
+            bgScale = Math.min(6, bgScale * 1.02);
+            draw();
+        });
+    }
+    if (alignZoomOut) {
+        alignZoomOut.addEventListener("click", () => {
+            if (!bgImage) return;
+            bgScale = Math.max(0.1, bgScale / 1.02);
+            draw();
+        });
+    }
+    if (alignReset) {
+        alignReset.addEventListener("click", () => {
+            if (!bgImage) return;
+            const scaleW = CANVAS_WIDTH / bgImage.width;
+            const scaleH = CANVAS_HEIGHT / bgImage.height;
+            bgScale = Math.min(scaleW, scaleH);
+            bgX = (CANVAS_WIDTH - bgImage.width * bgScale) / 2;
+            bgY = (CANVAS_HEIGHT - bgImage.height * bgScale) / 2;
+            draw();
         });
     }
     
@@ -570,7 +589,7 @@ function setupEventListeners() {
                 const mouseY = coords.y;
                 const bgMouseX = (mouseX - bgX) / bgScale;
                 const bgMouseY = (mouseY - bgY) / bgScale;
-                const zoomFactor = e.deltaY < 0 ? 1.06 : 0.94;
+                const zoomFactor = e.deltaY < 0 ? 1.03 : 0.97;
                 const nextScale = Math.max(0.1, Math.min(6, bgScale * zoomFactor));
                 bgX = mouseX - bgMouseX * nextScale;
                 bgY = mouseY - bgMouseY * nextScale;
@@ -656,7 +675,10 @@ function setupEventListeners() {
         };
     }
 
-    canvas.addEventListener("touchstart", (e) => {
+    // Listen to touch events on workspace & canvas for responsive mobile interaction
+    const touchSurface = workspaceEl || canvas;
+    
+    touchSurface.addEventListener("touchstart", (e) => {
         if (e.touches.length >= 2) {
             e.preventDefault();
             isPinching = true;
@@ -677,13 +699,13 @@ function setupEventListeners() {
                 initialPinchScale = canvasUserZoom;
                 initialCanvasPan = { x: canvasPanX, y: canvasPanY };
             }
-        } else if (e.touches.length === 1) {
+        } else if (e.touches.length === 1 && e.target === canvas) {
             isPinching = false;
             handleMouseDown(e);
         }
     }, { passive: false });
 
-    canvas.addEventListener("touchmove", (e) => {
+    touchSurface.addEventListener("touchmove", (e) => {
         if (e.touches.length >= 2) {
             e.preventDefault();
             const touchInfo = getTouchInfo(e.touches[0], e.touches[1]);
@@ -693,20 +715,10 @@ function setupEventListeners() {
                 const panDeltaY = touchInfo.center.clientY - initialPinchCenter.clientY;
 
                 if (isAlignMode && bgImage) {
-                    // Zoom only the uploaded base screenshot, keeping the marker boundaries fixed!
-                    const coords = getCanvasCoords({
-                        clientX: initialPinchCenter.clientX,
-                        clientY: initialPinchCenter.clientY
-                    });
-                    const mouseX = coords.x;
-                    const mouseY = coords.y;
-                    const bgMouseX = (mouseX - initialBgState.x) / initialBgState.scale;
-                    const bgMouseY = (mouseY - initialBgState.y) / initialBgState.scale;
-
-                    const newScale = Math.max(0.1, Math.min(6, initialBgState.scale * scaleFactor));
-                    bgScale = newScale;
-                    bgX = mouseX - bgMouseX * newScale + (panDeltaX / (canvasBaseScale * canvasUserZoom));
-                    bgY = mouseY - bgMouseY * newScale + (panDeltaY / (canvasBaseScale * canvasUserZoom));
+                    // Zoom only the uploaded base screenshot, the boundary grid remains completely fixed!
+                    bgScale = Math.max(0.1, Math.min(6, initialBgState.scale * scaleFactor));
+                    bgX = initialBgState.x + panDeltaX;
+                    bgY = initialBgState.y + panDeltaY;
                     draw();
                 } else {
                     // Normal planning mode: zoom & pan the entire canvas view smoothly
@@ -716,16 +728,16 @@ function setupEventListeners() {
                     updateCanvasTransform();
                 }
             }
-        } else if (e.touches.length === 1 && !isPinching) {
+        } else if (e.touches.length === 1 && !isPinching && e.target === canvas) {
             handleMouseMove(e);
         }
     }, { passive: false });
 
-    canvas.addEventListener("touchend", (e) => {
+    touchSurface.addEventListener("touchend", (e) => {
         if (e.touches.length === 0) {
             isPinching = false;
             initialPinchDistance = 0;
-            handleMouseUp();
+            if (e.target === canvas) handleMouseUp();
         } else if (e.touches.length === 1) {
             isPinching = true;
             isDrawing = false;
@@ -733,29 +745,37 @@ function setupEventListeners() {
         }
     }, { passive: false });
 
-    // Smooth Mobile Touch Scrolling for Accordion Units List
+    // Smooth Mobile Touch & Wheel Scrolling for Right Sidebar Unit Library
+    const rightSidebar = document.getElementById("rightSidebar");
     const accordionContainer = document.getElementById("accordionCategories");
-    if (accordionContainer) {
-        let touchStartY = 0;
-        let touchStartScrollTop = 0;
+    
+    if (rightSidebar && accordionContainer) {
+        // Desktop Wheel
+        rightSidebar.addEventListener("wheel", (e) => {
+            e.stopPropagation();
+            accordionContainer.scrollTop += e.deltaY;
+        }, { passive: true });
         
-        accordionContainer.addEventListener("touchstart", (e) => {
+        // Mobile Touch Drag
+        let touchStartY = 0;
+        let startScrollTop = 0;
+        
+        rightSidebar.addEventListener("touchstart", (e) => {
             if (e.touches.length === 1) {
                 touchStartY = e.touches[0].clientY;
-                touchStartScrollTop = accordionContainer.scrollTop;
+                startScrollTop = accordionContainer.scrollTop;
             }
         }, { passive: true });
         
-        accordionContainer.addEventListener("touchmove", (e) => {
+        rightSidebar.addEventListener("touchmove", (e) => {
             if (e.touches.length === 1) {
-                const deltaY = touchStartY - e.touches[0].clientY;
-                accordionContainer.scrollTop = touchStartScrollTop + deltaY;
+                const diffY = touchStartY - e.touches[0].clientY;
+                accordionContainer.scrollTop = startScrollTop + diffY;
             }
         }, { passive: true });
     }
 
     // Mobile Landscape Right Sidebar Toggles
-    const rightSidebar = document.getElementById("rightSidebar");
     const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
     const closeRightSidebarBtn = document.getElementById("closeRightSidebarBtn");
     

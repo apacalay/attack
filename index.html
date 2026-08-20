@@ -16,8 +16,12 @@
     <header>
         <div class="logo-section">
             <h1><i class="fa-solid fa-crosshairs"></i> CoC <span>Attack Planner</span></h1>
-            <div id="alignBanner" class="align-banner">
-                <i class="fa-solid fa-circle-exclamation"></i> Grid Alignment Mode Aktif
+            <div id="alignBanner" class="align-banner" style="display: none;">
+                <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                <span>Align Mode</span>
+                <button class="btn btn-icon btn-sm" id="alignZoomOut" title="Perkecil Base"><i class="fa-solid fa-minus"></i></button>
+                <button class="btn btn-icon btn-sm" id="alignZoomIn" title="Perbesar Base"><i class="fa-solid fa-plus"></i></button>
+                <button class="btn btn-sm" id="alignReset" title="Reset Ukuran Base"><i class="fa-solid fa-rotate-left"></i> Fit</button>
             </div>
         </div>
         

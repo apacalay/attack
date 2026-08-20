@@ -89,22 +89,30 @@ header {
 
 /* Alignment Mode Banner */
 .align-banner {
-    background-color: rgba(245, 158, 11, 0.1);
+    background-color: rgba(245, 158, 11, 0.15);
     border: 1px solid var(--accent-color);
     color: var(--accent-color);
-    padding: 6px 16px;
+    padding: 4px 10px;
     border-radius: 8px;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     display: none;
     align-items: center;
-    gap: 8px;
-    animation: pulse 2s infinite ease-in-out;
+    gap: 6px;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+.align-banner .btn-sm {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    height: 26px;
+    background-color: rgba(245, 158, 11, 0.25);
+    border: 1px solid var(--accent-color);
+    color: #ffffff;
+}
+
+.align-banner .btn-sm:hover {
+    background-color: var(--accent-color);
+    color: #000000;
 }
 
 .header-controls {
@@ -127,6 +135,13 @@ header {
     align-items: center;
     gap: 8px;
     transition: all 0.2s ease;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    height: 28px;
+    border-radius: 6px;
 }
 
 .btn:hover {
@@ -394,13 +409,13 @@ header {
 
 /* Accordion Categories */
 .accordion-categories {
-    flex: 1 1 auto;
-    height: 100%;
-    max-height: 100%;
+    flex: 1 1 0;
+    height: calc(100% - 56px);
+    max-height: calc(100% - 56px);
     min-height: 0;
-    overflow-y: auto !important;
+    overflow-y: scroll !important;
     overflow-x: hidden;
-    padding: 10px 8px 60px 8px;
+    padding: 10px 8px 100px 8px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -412,9 +427,9 @@ header {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     background-color: rgba(17, 23, 38, 0.7);
-    overflow: hidden;
     transition: all 0.2s ease;
     touch-action: pan-y;
+    flex-shrink: 0;
 }
 
 .accordion-section:hover {
