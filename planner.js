@@ -683,14 +683,16 @@ function setupEventListeners() {
         if (e.touches.length >= 2) {
             e.preventDefault();
             
-            // Cancel any ongoing 1-finger action cleanly
-            if (isDrawing || isDraggingElement || isDraggingBg || isResizingTarget) {
+            // Cancel any ongoing 1-finger action cleanly (including canvas panning)
+            if (isDrawing || isDraggingElement || isDraggingBg || isResizingTarget || isPanningCanvas) {
                 isDrawing = false;
                 isDraggingElement = false;
                 isDraggingBg = false;
                 isResizingTarget = false;
+                isPanningCanvas = false;
                 arrowPreview = null;
                 brushPreview = null;
+                document.body.style.cursor = "default";
             }
             
             isPinching = true;
@@ -720,6 +722,8 @@ function setupEventListeners() {
     touchSurface.addEventListener("touchmove", (e) => {
         if (e.touches.length >= 2 && isPinching) {
             e.preventDefault();
+            // Ensure panning is killed so it doesn't intercept pinch via handleMouseMove
+            isPanningCanvas = false;
             const touchInfo = getTouchInfo(e.touches[0], e.touches[1]);
             if (initialPinchDistance > 0) {
                 const scaleFactor = touchInfo.dist / initialPinchDistance;
@@ -758,8 +762,10 @@ function setupEventListeners() {
             }
         } else if (e.touches.length === 1 && isPinching) {
             // Went from 2 fingers to 1: keep pinching state, don't start drawing
-            // Re-initialize pinch from current single finger position for smooth re-entry
+            // Also ensure panning is fully killed so next 2-finger pinch works cleanly
             e.preventDefault();
+            isPanningCanvas = false;
+            isDraggingBg = false;
         }
     }, { passive: false });
 
