@@ -151,6 +151,7 @@ const markerImage = new Image();
 markerImage.src = "marker.webp"; // Loaded locally since it exists in the same folder
 
 const splashImage = new Image();
+splashImage.crossOrigin = "anonymous";
 splashImage.src = ASSETS_BASE_URL + "/attack_planner.webp";
 
 // Placement Counter for Deployment Order
@@ -316,6 +317,7 @@ function renderAccordionCategories() {
             
             const img = document.createElement("img");
             img.className = "unit-icon";
+            img.crossOrigin = "anonymous";
             img.src = imageUrl;
             img.loading = "lazy";
             img.alt = name;
@@ -1075,8 +1077,17 @@ function handleMouseDown(e) {
         if (selectedElement) {
             isDraggingElement = true;
             if (!arrowDragEnd && !isResizingTarget) {
-                dragOffset.x = coords.x - (selectedElement.x || selectedElement.x1);
-                dragOffset.y = coords.y - (selectedElement.y || selectedElement.y1);
+                // Brush uses points[0] instead of .x/.x1
+                let refX, refY;
+                if (selectedElement.type === Tools.BRUSH && selectedElement.points && selectedElement.points.length > 0) {
+                    refX = selectedElement.points[0].x;
+                    refY = selectedElement.points[0].y;
+                } else {
+                    refX = selectedElement.x !== undefined ? selectedElement.x : selectedElement.x1;
+                    refY = selectedElement.y !== undefined ? selectedElement.y : selectedElement.y1;
+                }
+                dragOffset.x = coords.x - refX;
+                dragOffset.y = coords.y - refY;
             }
         } else {
             isDraggingElement = false;
@@ -1808,6 +1819,7 @@ function drawUnitIcon(el, isSelected) {
     
     if (!img) {
         img = new Image();
+        img.crossOrigin = "anonymous";
         img.onload = () => {
             draw();
         };
@@ -1974,13 +1986,22 @@ function downloadPlan() {
     draw();
     
     // Export PNG
-    canvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.download = `coc-attack-plan-${Date.now()}.png`;
-        link.href = url;
-        link.click();
-        
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-    }, "image/png", 0.95);
+    try {
+        canvas.toBlob(blob => {
+            if (!blob) {
+                alert("Gagal membuat gambar. Coba lagi.");
+                return;
+            }
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.download = `coc-attack-plan-${Date.now()}.png`;
+            link.href = url;
+            link.click();
+            
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }, "image/png", 0.95);
+    } catch (err) {
+        console.error("Download failed (canvas tainted):", err);
+        alert("Download gagal karena gambar dari server eksternal. Coba refresh halaman dan ulangi.");
+    }
 }
