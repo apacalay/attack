@@ -11,30 +11,23 @@ const ASSETS_BASE_URL = "assets";
 const SPELL_RADII = {
     // Equipment
     "fireball": { radiusTiles: 6, color: "rgba(249, 115, 22, 0.22)", stroke: "rgba(249, 115, 22, 0.9)" }, // Diameter 12
-    
-    // Spells (Exact Diameter -> Radius in Tiles)
-    "invisibility spell": { radiusTiles: 4, color: "rgba(59, 130, 246, 0.2)", stroke: "rgba(59, 130, 246, 0.9)" }, // Diameter 8
-    "invisibility": { radiusTiles: 4, color: "rgba(59, 130, 246, 0.2)", stroke: "rgba(59, 130, 246, 0.9)" },
-    "freeze spell": { radiusTiles: 3.5, color: "rgba(6, 182, 212, 0.22)", stroke: "rgba(6, 182, 212, 0.9)" }, // Diameter 7
-    "freeze": { radiusTiles: 3.5, color: "rgba(6, 182, 212, 0.22)", stroke: "rgba(6, 182, 212, 0.9)" },
-    "jump spell": { radiusTiles: 3.5, color: "rgba(34, 197, 94, 0.22)", stroke: "rgba(34, 197, 94, 0.9)" }, // Diameter 7
-    "jump": { radiusTiles: 3.5, color: "rgba(34, 197, 94, 0.22)", stroke: "rgba(34, 197, 94, 0.9)" },
-    "earthquake spell": { radiusTiles: 4.7, color: "rgba(217, 119, 6, 0.24)", stroke: "rgba(217, 119, 6, 0.9)" }, // Diameter 9.4
-    "earthquake": { radiusTiles: 4.7, color: "rgba(217, 119, 6, 0.24)", stroke: "rgba(217, 119, 6, 0.9)" },
-    "overgrowth spell": { radiusTiles: 6, color: "rgba(16, 185, 129, 0.22)", stroke: "rgba(16, 185, 129, 0.9)" }, // Diameter 12
-    "overgrowth": { radiusTiles: 6, color: "rgba(16, 185, 129, 0.22)", stroke: "rgba(16, 185, 129, 0.9)" },
-    
-    // Additional standard spells
-    "rage spell": { radiusTiles: 5, color: "rgba(236, 72, 153, 0.2)", stroke: "rgba(236, 72, 153, 0.9)" }, // Diameter 10
-    "rage": { radiusTiles: 5, color: "rgba(236, 72, 153, 0.2)", stroke: "rgba(236, 72, 153, 0.9)" },
-    "healing spell": { radiusTiles: 5, color: "rgba(234, 179, 8, 0.2)", stroke: "rgba(234, 179, 8, 0.9)" }, // Diameter 10
-    "healing": { radiusTiles: 5, color: "rgba(234, 179, 8, 0.2)", stroke: "rgba(234, 179, 8, 0.9)" },
+
+    // Spells (Home Village)
     "lightning spell": { radiusTiles: 2, color: "rgba(56, 189, 248, 0.2)", stroke: "rgba(56, 189, 248, 0.9)" },
-    "poison spell": { radiusTiles: 4, color: "rgba(239, 68, 68, 0.2)", stroke: "rgba(239, 68, 68, 0.9)" }, // Diameter 8
-    "haste spell": { radiusTiles: 4, color: "rgba(245, 158, 11, 0.2)", stroke: "rgba(245, 158, 11, 0.9)" }, // Diameter 8
-    "bat spell": { radiusTiles: 3, color: "rgba(168, 85, 247, 0.2)", stroke: "rgba(168, 85, 247, 0.9)" },
-    "skeleton spell": { radiusTiles: 3, color: "rgba(148, 163, 184, 0.2)", stroke: "rgba(148, 163, 184, 0.9)" },
-    "clone spell": { radiusTiles: 3.5, color: "rgba(99, 102, 241, 0.2)", stroke: "rgba(99, 102, 241, 0.9)" }
+    "healing spell": { radiusTiles: 5, color: "rgba(234, 179, 8, 0.2)", stroke: "rgba(230, 234, 8, 0.9)" }, // Diameter 10
+    "rage spell": { radiusTiles: 5, color: "rgba(236, 72, 153, 0.2)", stroke: "rgba(236, 72, 153, 0.9)" }, // Diameter 10
+    "jump spell": { radiusTiles: 3.5, color: "rgba(34, 197, 94, 0.22)", stroke: "rgba(34, 197, 94, 0.9)" }, // Diameter 7
+    "freeze spell": { radiusTiles: 3.5, color: "rgba(6, 182, 212, 0.22)", stroke: "rgba(6, 182, 212, 0.9)" }, // Diameter 7
+    "clone spell": { radiusTiles: 3.5, color: "rgba(215, 252, 255, 0.23)", stroke: "rgba(215, 252, 255, 0.9)" },
+    "invisibility spell": { radiusTiles: 4, color: "rgba(118, 205, 172, 0.25)", stroke: "rgba(118, 205, 172, 0.9)" }, // Diameter 8
+
+    // Dark Spells
+    "poison spell": { radiusTiles: 4, color: "rgba(180, 75, 10, 0.19)", stroke: "rgba(180, 75, 10, 0.9)" }, // Diameter 8
+    "earthquake spell": { radiusTiles: 4.7, color: "rgba(217, 119, 6, 0.24)", stroke: "rgba(217, 119, 6, 0.9)" }, // Diameter 9.4
+    "haste spell": { radiusTiles: 5, color: "rgba(215, 60, 143, 0.35)", stroke: "rgba(215, 60, 142, 0.9)" }, // Diameter 8
+    "skeleton spell": { radiusTiles: 3.5, color: "rgba(255, 60, 79, 0.23)", stroke: "rgba(255, 60, 80, 0.9)" },
+    "bat spell": { radiusTiles: 3.5, color: "rgba(169, 85, 247, 0.26)", stroke: "rgba(168, 85, 247, 0.9)" },
+    "overgrowth spell": { radiusTiles: 6, color: "rgba(16, 185, 129, 0.22)", stroke: "rgba(16, 185, 129, 0.9)" } // Diameter 12
 };
 
 // Tool Modes
@@ -42,6 +35,7 @@ const Tools = {
     SELECT: "select",
     BRUSH: "brush",
     ARROW: "arrow",
+    CIRCLE: "circle",
     XMARK: "xmark",
     TEXT: "text",
     ERASER: "eraser",
@@ -104,8 +98,8 @@ let showMarkerOverlay = false;
 
 // Drawing state
 let currentTool = Tools.SELECT;
-let currentColor = "#ef4444"; // default red
-let currentWidth = 8;
+let currentColor = "#3b82f6"; // default royal blue
+let currentWidth = 5;
 let currentTextSize = 32;
 
 let elements = [];
@@ -117,9 +111,10 @@ let isDraggingBg = false;
 let dragStartX = 0;
 let dragStartY = 0;
 
-// Arrow & Brush temporary coordinates
+// Arrow, Brush & Circle temporary coordinates
 let arrowPreview = null;
 let brushPreview = null;
+let circlePreview = null;
 
 // Viewport zoom & pan state for planning mode
 let canvasBaseScale = 1.0;
@@ -167,11 +162,11 @@ window.addEventListener("DOMContentLoaded", () => {
 function initCanvas() {
     canvas = document.getElementById("plannerCanvas");
     ctx = canvas.getContext("2d");
-    
+
     // Set internal canvas resolution (always 1920x1080)
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
-    
+
     fitCanvasToWorkspace();
     window.addEventListener("resize", fitCanvasToWorkspace);
 }
@@ -181,7 +176,7 @@ function updateCanvasTransform() {
     if (!canvasContainer) return;
     const finalScale = canvasBaseScale * canvasUserZoom;
     canvasContainer.style.transform = `translate(${canvasPanX}px, ${canvasPanY}px) scale(${finalScale})`;
-    
+
     const zoomText = document.getElementById("zoomPercentage");
     if (zoomText) {
         zoomText.innerText = `${Math.round(canvasUserZoom * 100)}%`;
@@ -192,12 +187,12 @@ function updateCanvasTransform() {
 function fitCanvasToWorkspace() {
     const container = document.querySelector(".workspace");
     const canvasContainer = document.querySelector(".canvas-container");
-    
+
     if (!container || !canvasContainer) return;
-    
+
     const containerW = container.clientWidth - 32;
     const containerH = container.clientHeight - 32;
-    
+
     canvasBaseScale = Math.min(containerW / CANVAS_WIDTH, containerH / CANVAS_HEIGHT);
     updateCanvasTransform();
 }
@@ -217,11 +212,11 @@ const categoryIcons = {
 // Load and render units unified collapsible accordion sidebar
 function initUI() {
     renderAccordionCategories();
-    
+
     // Realtime search filter across all accordion categories
     const searchInput = document.getElementById("unitSearch");
     const clearSearchBtn = document.getElementById("clearSearchBtn");
-    
+
     if (searchInput) {
         searchInput.addEventListener("input", (e) => {
             const query = e.target.value.toLowerCase().trim();
@@ -231,7 +226,7 @@ function initUI() {
             filterAllCategories(query);
         });
     }
-    
+
     if (clearSearchBtn && searchInput) {
         clearSearchBtn.addEventListener("click", () => {
             searchInput.value = "";
@@ -254,22 +249,22 @@ function initUI() {
 function renderAccordionCategories() {
     const container = document.getElementById("accordionCategories");
     if (!container) return;
-    
+
     container.innerHTML = "";
-    
+
     unitCategories.forEach((cat) => {
         const iconClass = categoryIcons[cat.name] || "fa-shield-halved";
-        
+
         const section = document.createElement("div");
         // All categories collapsed by default for clean presentation
         section.className = "accordion-section";
         section.dataset.category = cat.name.toLowerCase();
-        
+
         // Header Button
         const header = document.createElement("button");
         header.type = "button";
         header.className = "accordion-header";
-        
+
         const titleWrap = document.createElement("div");
         titleWrap.className = "accordion-title-wrap";
         titleWrap.innerHTML = `
@@ -277,13 +272,13 @@ function renderAccordionCategories() {
             <span class="accordion-name">${cat.name}</span>
             <span class="accordion-badge">${cat.files.length}</span>
         `;
-        
+
         const chevron = document.createElement("i");
         chevron.className = "fa-solid fa-chevron-down accordion-chevron";
-        
+
         header.appendChild(titleWrap);
         header.appendChild(chevron);
-        
+
         // Single-expand exclusive accordion: opens clicked, closes others
         header.addEventListener("click", () => {
             const wasActive = section.classList.contains("active");
@@ -292,28 +287,28 @@ function renderAccordionCategories() {
                 section.classList.add("active");
             }
         });
-        
+
         // Body Grid
         const body = document.createElement("div");
         body.className = "accordion-body";
-        
+
         const grid = document.createElement("div");
         grid.className = "accordion-grid";
-        
+
         cat.files.forEach(file => {
             const name = file.replace(/\.(png|webp|jpg|jpeg)$/i, "").replace(/_/g, " ");
             const folderEncoded = encodeURIComponent(cat.folder);
             const fileEncoded = encodeURIComponent(file);
             const imageUrl = `${ASSETS_BASE_URL}/${folderEncoded}/${fileEncoded}`;
-            
+
             const item = document.createElement("div");
             item.className = "unit-item";
             item.dataset.name = name.toLowerCase();
             item.title = name;
-            
+
             const wrapper = document.createElement("div");
             wrapper.className = "unit-icon-wrapper";
-            
+
             const img = document.createElement("img");
             img.className = "unit-icon";
             img.src = imageUrl;
@@ -321,37 +316,37 @@ function renderAccordionCategories() {
             img.alt = name;
             img.onload = () => draw();
             imageCache.set(imageUrl, img);
-            
+
             wrapper.appendChild(img);
             item.appendChild(wrapper);
-            
+
             const nameDiv = document.createElement("div");
             nameDiv.className = "unit-name";
             nameDiv.innerText = name;
             nameDiv.title = name;
             item.appendChild(nameDiv);
-            
+
             item.addEventListener("click", () => {
                 document.querySelectorAll(".unit-item").forEach(u => u.classList.remove("active"));
                 item.classList.add("active");
-                
+
                 window.selectedUnit = {
                     name: name,
                     src: imageUrl,
                     folder: cat.folder
                 };
                 setTool(Tools.ICON);
-                
+
                 // On mobile landscape, auto close drawer after selecting unit so canvas is immediately visible
                 const rightSidebar = document.getElementById("rightSidebar");
                 if (rightSidebar && window.innerWidth <= 980) {
                     rightSidebar.classList.remove("open");
                 }
             });
-            
+
             grid.appendChild(item);
         });
-        
+
         body.appendChild(grid);
         section.appendChild(header);
         section.appendChild(body);
@@ -363,7 +358,7 @@ function filterAllCategories(query) {
     document.querySelectorAll(".accordion-section").forEach(section => {
         let hasMatch = false;
         const items = section.querySelectorAll(".unit-item");
-        
+
         items.forEach(item => {
             const name = item.dataset.name || "";
             if (!query || name.includes(query)) {
@@ -373,7 +368,7 @@ function filterAllCategories(query) {
                 item.style.display = "none";
             }
         });
-        
+
         if (query) {
             if (hasMatch) {
                 section.style.display = "block";
@@ -396,7 +391,7 @@ function setupEventListeners() {
             btn.addEventListener("click", () => setTool(tool));
         }
     });
-    
+
     // Color Swatches
     document.querySelectorAll(".color-swatch").forEach(swatch => {
         swatch.addEventListener("click", () => {
@@ -405,7 +400,7 @@ function setupEventListeners() {
             currentColor = swatch.dataset.color;
         });
     });
-    
+
     // Background upload trigger
     const fileInput = document.getElementById("fileInput");
     const uploadBtn = document.getElementById("uploadBtn");
@@ -413,24 +408,24 @@ function setupEventListeners() {
         uploadBtn.addEventListener("click", () => fileInput.click());
         fileInput.addEventListener("change", handleFileSelect);
     }
-    
+
     // Drag and drop base image
     const workspace = document.querySelector(".workspace");
     const dragOverlay = document.getElementById("dragOverlay");
-    
+
     workspace.addEventListener("dragenter", (e) => {
         e.preventDefault();
         dragOverlay.style.display = "flex";
     });
-    
+
     dragOverlay.addEventListener("dragover", (e) => {
         e.preventDefault();
     });
-    
+
     dragOverlay.addEventListener("dragleave", () => {
         dragOverlay.style.display = "none";
     });
-    
+
     dragOverlay.addEventListener("drop", (e) => {
         e.preventDefault();
         dragOverlay.style.display = "none";
@@ -438,13 +433,13 @@ function setupEventListeners() {
             loadBaseImageFile(e.dataTransfer.files[0]);
         }
     });
-    
+
     // Alignment Controls
     const alignBtn = document.getElementById("alignBtn");
     if (alignBtn) {
         alignBtn.addEventListener("click", toggleAlignMode);
     }
-    
+
     const toggleBoundaryBtn = document.getElementById("toggleBoundaryBtn");
     if (toggleBoundaryBtn) {
         updateBoundaryBtnUI();
@@ -454,13 +449,13 @@ function setupEventListeners() {
             draw();
         });
     }
-    
+
     // Undo / Redo / Clear / Download
     const undoBtn = document.getElementById("undoBtn");
     const redoBtn = document.getElementById("redoBtn");
     const clearBtn = document.getElementById("clearBtn");
     const downloadBtn = document.getElementById("downloadBtn");
-    
+
     if (undoBtn) undoBtn.addEventListener("click", undo);
     if (redoBtn) redoBtn.addEventListener("click", redo);
     if (clearBtn) clearBtn.addEventListener("click", clearCanvas);
@@ -469,7 +464,7 @@ function setupEventListeners() {
     const alignZoomIn = document.getElementById("alignZoomIn");
     const alignZoomOut = document.getElementById("alignZoomOut");
     const alignReset = document.getElementById("alignReset");
-    
+
     if (alignZoomIn) {
         alignZoomIn.addEventListener("click", () => {
             if (!bgImage) return;
@@ -495,17 +490,17 @@ function setupEventListeners() {
             draw();
         });
     }
-    
+
     // Text popover handling
     const popover = document.getElementById("textPopover");
     const popoverInput = document.getElementById("popoverInput");
     const popoverSave = document.getElementById("popoverSave");
     const popoverCancel = document.getElementById("popoverCancel");
-    
+
     function submitPopoverText() {
         const textVal = popoverInput.value.trim();
         if (textVal) {
-            elements.push({
+            const newText = {
                 id: Date.now() + Math.random(),
                 type: Tools.TEXT,
                 x: textPlacementCoords.x,
@@ -513,16 +508,25 @@ function setupEventListeners() {
                 text: textVal,
                 color: currentColor,
                 fontSize: currentTextSize
-            });
+            };
+            elements.push(newText);
             saveState();
+
+            // Auto switch back to SELECT tool so user can immediately move/manage text
+            setTool(Tools.SELECT);
+            selectedElement = newText;
+            isDraggingElement = false;
+
             draw();
+        } else {
+            setTool(Tools.SELECT);
         }
         popover.style.display = "none";
         popoverInput.value = "";
     }
-    
+
     popoverSave.addEventListener("click", submitPopoverText);
-    
+
     popoverInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -531,19 +535,21 @@ function setupEventListeners() {
             e.preventDefault();
             popover.style.display = "none";
             popoverInput.value = "";
+            setTool(Tools.SELECT);
         }
     });
-    
+
     popoverCancel.addEventListener("click", () => {
         popover.style.display = "none";
         popoverInput.value = "";
+        setTool(Tools.SELECT);
     });
-    
+
     // Keyboard Shortcuts
     window.addEventListener("keydown", (e) => {
         // Prevent shortcuts if typing in text input
         if (document.activeElement.tagName === "INPUT") return;
-        
+
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
             e.preventDefault();
             undo();
@@ -561,11 +567,13 @@ function setupEventListeners() {
         } else if (e.key === "Escape") {
             selectedElement = null;
             arrowPreview = null;
+            brushPreview = null;
+            circlePreview = null;
             popover.style.display = "none";
             draw();
         }
     });
-    
+
     // Canvas Mouse & Touch Interactivity
     canvas.addEventListener("mousedown", handleMouseDown);
     canvas.addEventListener("mousemove", handleMouseMove);
@@ -575,13 +583,13 @@ function setupEventListeners() {
             handleMouseUp();
         }
     });
-    
+
     // Workspace & Canvas Wheel zoom (both for align mode and normal planning zoom)
     const workspaceEl = document.querySelector(".workspace");
     if (workspaceEl) {
         workspaceEl.addEventListener("wheel", (e) => {
             e.preventDefault();
-            
+
             if (isAlignMode && bgImage) {
                 // In base align mode, zoom the uploaded screenshot background
                 const coords = getCanvasCoords(e);
@@ -603,7 +611,7 @@ function setupEventListeners() {
             }
         }, { passive: false });
     }
-    
+
     // Spacebar key listener for canvas panning
     window.addEventListener("keydown", (e) => {
         if (e.code === "Space" && document.activeElement.tagName !== "INPUT") {
@@ -611,7 +619,7 @@ function setupEventListeners() {
             document.body.style.cursor = "grab";
         }
     });
-    
+
     window.addEventListener("keyup", (e) => {
         if (e.code === "Space") {
             isSpacePressed = false;
@@ -632,7 +640,7 @@ function setupEventListeners() {
                 document.body.style.cursor = "grabbing";
             }
         });
-        
+
         window.addEventListener("mousemove", (e) => {
             if (isPanningCanvas) {
                 canvasPanX = panStartCanvasX + (e.clientX - panStartMouseX);
@@ -640,14 +648,14 @@ function setupEventListeners() {
                 updateCanvasTransform();
             }
         });
-        
+
         window.addEventListener("mouseup", () => {
             if (isPanningCanvas) {
                 isPanningCanvas = false;
                 document.body.style.cursor = isSpacePressed ? "grab" : "default";
             }
         });
-        
+
         workspaceEl.addEventListener("contextmenu", (e) => {
             if (isPanningCanvas || canvasUserZoom > 1.05) {
                 e.preventDefault();
@@ -678,11 +686,11 @@ function setupEventListeners() {
 
     // Listen to touch events on workspace & canvas for responsive mobile interaction
     const touchSurface = workspaceEl || canvas;
-    
+
     touchSurface.addEventListener("touchstart", (e) => {
         if (e.touches.length >= 2) {
             e.preventDefault();
-            
+
             // Cancel any ongoing 1-finger action cleanly (including canvas panning)
             if (isDrawing || isDraggingElement || isDraggingBg || isResizingTarget || isPanningCanvas) {
                 isDrawing = false;
@@ -692,9 +700,10 @@ function setupEventListeners() {
                 isPanningCanvas = false;
                 arrowPreview = null;
                 brushPreview = null;
+                circlePreview = null;
                 document.body.style.cursor = "default";
             }
-            
+
             isPinching = true;
             touchCooldown = true;
 
@@ -772,25 +781,25 @@ function setupEventListeners() {
     // Smooth Mobile Touch & Wheel Scrolling for Right Sidebar Unit Library
     const rightSidebar = document.getElementById("rightSidebar");
     const accordionContainer = document.getElementById("accordionCategories");
-    
+
     if (rightSidebar && accordionContainer) {
         // Desktop Wheel
         rightSidebar.addEventListener("wheel", (e) => {
             e.stopPropagation();
             accordionContainer.scrollTop += e.deltaY;
         }, { passive: true });
-        
+
         // Mobile Touch Drag
         let touchStartY = 0;
         let startScrollTop = 0;
-        
+
         rightSidebar.addEventListener("touchstart", (e) => {
             if (e.touches.length === 1) {
                 touchStartY = e.touches[0].clientY;
                 startScrollTop = accordionContainer.scrollTop;
             }
         }, { passive: true });
-        
+
         rightSidebar.addEventListener("touchmove", (e) => {
             if (e.touches.length === 1) {
                 const diffY = touchStartY - e.touches[0].clientY;
@@ -802,7 +811,7 @@ function setupEventListeners() {
     // Mobile Landscape Right Sidebar Toggles
     const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
     const closeRightSidebarBtn = document.getElementById("closeRightSidebarBtn");
-    
+
     if (mobileSidebarToggle && rightSidebar) {
         mobileSidebarToggle.addEventListener("click", () => {
             rightSidebar.classList.toggle("open");
@@ -813,7 +822,7 @@ function setupEventListeners() {
             rightSidebar.classList.remove("open");
         });
     }
-    
+
     // Fullscreen Toggle
     const fullscreenBtn = document.getElementById("fullscreenBtn");
     if (fullscreenBtn) {
@@ -832,7 +841,7 @@ function setupEventListeners() {
     const zoomInBtn = document.getElementById("zoomInBtn");
     const zoomOutBtn = document.getElementById("zoomOutBtn");
     const zoomResetBtn = document.getElementById("zoomResetBtn");
-    
+
     if (zoomInBtn) {
         zoomInBtn.addEventListener("click", () => {
             canvasUserZoom = Math.min(3.5, canvasUserZoom * 1.2);
@@ -858,7 +867,7 @@ function setupEventListeners() {
 // Set active drawing tool
 function setTool(tool) {
     currentTool = tool;
-    
+
     // If user picks a drawing/action tool, exit align mode so drawing works immediately
     if (tool !== Tools.SELECT && isAlignMode) {
         isAlignMode = false;
@@ -873,19 +882,19 @@ function setTool(tool) {
         if (banner) banner.style.display = "none";
         updateBoundaryBtnUI();
     }
-    
+
     document.querySelectorAll(".left-sidebar .tool-btn").forEach(btn => {
         btn.classList.remove("active");
         if (btn.dataset.tool === tool) {
             btn.classList.add("active");
         }
     });
-    
+
     if (tool !== Tools.ICON) {
         document.querySelectorAll(".unit-item").forEach(u => u.classList.remove("active"));
         window.selectedUnit = null;
     }
-    
+
     selectedElement = null;
     draw();
 }
@@ -898,35 +907,35 @@ function handleFileSelect(e) {
 
 function loadBaseImageFile(file) {
     if (!file.type.startsWith("image/")) return;
-    
+
     const reader = new FileReader();
     reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
             bgImage = img;
-            
+
             // Auto scale/center base image to fit canvas while preserving aspect ratio (contain-fit)
             const scaleW = CANVAS_WIDTH / img.width;
             const scaleH = CANVAS_HEIGHT / img.height;
             bgScale = Math.min(scaleW, scaleH);
             bgX = (CANVAS_WIDTH - img.width * bgScale) / 2;
             bgY = (CANVAS_HEIGHT - img.height * bgScale) / 2;
-            
+
             // Automatically open Grid Alignment mode when image is uploaded
             isAlignMode = true;
             showMarkerOverlay = true;
             updateBoundaryBtnUI();
-            
+
             const alignBtn = document.getElementById("alignBtn");
             if (alignBtn) {
                 alignBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span class="btn-text">Lock Grid & Start Drawing</span>';
                 alignBtn.classList.remove("btn-secondary");
                 alignBtn.classList.add("btn-primary");
             }
-            
+
             const banner = document.getElementById("alignBanner");
             if (banner) banner.style.display = "flex";
-            
+
             draw();
         };
         img.src = event.target.result;
@@ -936,11 +945,11 @@ function loadBaseImageFile(file) {
 
 function toggleAlignMode() {
     if (!bgImage) return;
-    
+
     isAlignMode = !isAlignMode;
     const alignBtn = document.getElementById("alignBtn");
     const banner = document.getElementById("alignBanner");
-    
+
     if (isAlignMode) {
         if (alignBtn) {
             alignBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span class="btn-text">Lock Grid & Start Drawing</span>';
@@ -982,7 +991,7 @@ function updateBoundaryBtnUI() {
 function getCanvasCoords(e) {
     const rect = canvas.getBoundingClientRect();
     let clientX, clientY;
-    
+
     if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].clientX;
         clientY = e.touches[0].clientY;
@@ -990,7 +999,7 @@ function getCanvasCoords(e) {
         clientX = e.clientX;
         clientY = e.clientY;
     }
-    
+
     return {
         x: (clientX - rect.left) * (CANVAS_WIDTH / rect.width),
         y: (clientY - rect.top) * (CANVAS_HEIGHT / rect.height)
@@ -1000,14 +1009,14 @@ function getCanvasCoords(e) {
 // Mouse Interactivity handlers
 function handleMouseDown(e) {
     const coords = getCanvasCoords(e);
-    
+
     if (isAlignMode) {
         isDraggingBg = true;
         dragStartX = coords.x - bgX;
         dragStartY = coords.y - bgY;
         return;
     }
-    
+
     // Normal tactic drawing mode
     if (currentTool === Tools.SELECT) {
         // Direct Pan Navigation: If Right Click, Middle Click, or Spacebar pressed
@@ -1024,7 +1033,7 @@ function handleMouseDown(e) {
         let clickedElement = null;
         arrowDragEnd = null;
         isResizingTarget = false;
-        
+
         // 1. If an arrow is already selected, prioritize clicking on its start/end handle points
         if (selectedElement && selectedElement.type === Tools.ARROW) {
             const distStart = Math.hypot(coords.x - selectedElement.x1, coords.y - selectedElement.y1);
@@ -1037,7 +1046,7 @@ function handleMouseDown(e) {
                 clickedElement = selectedElement;
             }
         }
-        
+
         // 2. If Target Plus is already selected, check corner resize handle (right corner)
         if (selectedElement && selectedElement.type === Tools.XMARK) {
             const s = selectedElement.size || 88;
@@ -1049,14 +1058,25 @@ function handleMouseDown(e) {
                 clickedElement = selectedElement;
             }
         }
-        
+
+        // 3. If Circle is already selected, check perimeter resize handle (right side)
+        if (selectedElement && selectedElement.type === Tools.CIRCLE) {
+            const rx = selectedElement.radius || (4 * TILE_SCALE_X);
+            const handleX = selectedElement.x + rx;
+            const handleY = selectedElement.y;
+            if (Math.hypot(coords.x - handleX, coords.y - handleY) < 22) {
+                isResizingTarget = true;
+                clickedElement = selectedElement;
+            }
+        }
+
         if (!clickedElement) {
             // Search elements from top to bottom (reverse array)
             for (let i = elements.length - 1; i >= 0; i--) {
                 const el = elements[i];
                 if (isClickOnElement(coords, el)) {
                     clickedElement = el;
-                    
+
                     if (el.type === Tools.ARROW) {
                         const distStart = Math.hypot(coords.x - el.x1, coords.y - el.y1);
                         const distEnd = Math.hypot(coords.x - el.x2, coords.y - el.y2);
@@ -1070,7 +1090,7 @@ function handleMouseDown(e) {
                 }
             }
         }
-        
+
         selectedElement = clickedElement;
         if (selectedElement) {
             isDraggingElement = true;
@@ -1112,6 +1132,13 @@ function handleMouseDown(e) {
             x2: coords.x,
             y2: coords.y
         };
+    } else if (currentTool === Tools.CIRCLE) {
+        isDrawing = true;
+        circlePreview = {
+            x: coords.x,
+            y: coords.y,
+            radius: 10
+        };
     } else if (currentTool === Tools.XMARK) {
         const newXMark = {
             id: Date.now() + Math.random(),
@@ -1123,21 +1150,21 @@ function handleMouseDown(e) {
         };
         elements.push(newXMark);
         saveState();
-        
+
         // Auto switch back to SELECT tool so user can immediately move or resize via corner handle
         setTool(Tools.SELECT);
         selectedElement = newXMark;
         isDraggingElement = false;
-        
+
         draw();
     } else if (currentTool === Tools.TEXT) {
         const popover = document.getElementById("textPopover");
         const popoverInput = document.getElementById("popoverInput");
-        
+
         popover.style.left = `${e.clientX}px`;
         popover.style.top = `${e.clientY}px`;
         popover.style.display = "flex";
-        
+
         textPlacementCoords = { x: coords.x, y: coords.y };
         setTimeout(() => {
             popoverInput.value = "";
@@ -1156,12 +1183,12 @@ function handleMouseDown(e) {
         };
         elements.push(newElement);
         saveState();
-        
+
         // Auto switch back to SELECT tool with nothing actively dragged
         setTool(Tools.SELECT);
         selectedElement = null;
         isDraggingElement = false;
-        
+
         draw();
     } else if (currentTool === Tools.ERASER) {
         for (let i = elements.length - 1; i >= 0; i--) {
@@ -1188,14 +1215,14 @@ function handleMouseMove(e) {
     }
 
     const coords = getCanvasCoords(e);
-    
+
     if (isAlignMode && isDraggingBg) {
         bgX = coords.x - dragStartX;
         bgY = coords.y - dragStartY;
         draw();
         return;
     }
-    
+
     if (isDrawing && currentTool === Tools.BRUSH && brushPreview) {
         brushPreview.push({ x: coords.x, y: coords.y });
         draw();
@@ -1203,11 +1230,24 @@ function handleMouseMove(e) {
         arrowPreview.x2 = coords.x;
         arrowPreview.y2 = coords.y;
         draw();
+    } else if (isDrawing && currentTool === Tools.CIRCLE && circlePreview) {
+        circlePreview.radius = Math.max(10, Math.hypot(coords.x - circlePreview.x, coords.y - circlePreview.y));
+        draw();
     } else if (isDraggingElement && selectedElement && currentTool === Tools.SELECT) {
         if (isResizingTarget && selectedElement.type === Tools.XMARK) {
             const dx = Math.abs(coords.x - selectedElement.x);
             // Allow smooth resizing from 35px (2x2) up to 240px (5x5)
             selectedElement.size = Math.max(35, Math.min(240, dx * 2));
+            draw();
+            return;
+        }
+
+        if (isResizingTarget && selectedElement.type === Tools.CIRCLE) {
+            const dx = coords.x - selectedElement.x;
+            const dy = (coords.y - selectedElement.y) / ISO_Y_RATIO;
+            const dist = Math.hypot(dx, dy);
+            // Allow smooth isometric radius resizing from 15px up to 700px
+            selectedElement.radius = Math.max(15, Math.min(700, dist));
             draw();
             return;
         }
@@ -1254,7 +1294,7 @@ function handleMouseUp() {
         isPanningCanvas = false;
         document.body.style.cursor = isSpacePressed ? "grab" : "default";
     }
-    
+
     if (isDrawing && currentTool === Tools.BRUSH && brushPreview) {
         if (brushPreview.length > 1) {
             const newBrush = {
@@ -1262,25 +1302,21 @@ function handleMouseUp() {
                 type: Tools.BRUSH,
                 points: brushPreview,
                 color: currentColor,
-                width: currentWidth || 8
+                width: currentWidth || 5
             };
             elements.push(newBrush);
             saveState();
-            
-            setTool(Tools.SELECT);
-            selectedElement = null;
-            isDraggingElement = false;
         }
         brushPreview = null;
         isDrawing = false;
         draw();
     }
-    
+
     if (isDrawing && currentTool === Tools.ARROW && arrowPreview) {
         const dx = arrowPreview.x2 - arrowPreview.x1;
         const dy = arrowPreview.y2 - arrowPreview.y1;
         const length = Math.hypot(dx, dy);
-        
+
         // Only save arrow if it is long enough (prevents tiny line noise)
         if (length > 15) {
             const newArrow = {
@@ -1295,7 +1331,7 @@ function handleMouseUp() {
             };
             elements.push(newArrow);
             saveState();
-            
+
             // Auto switch back to SELECT tool so subsequent clicks drag/move without duplicate drawing
             setTool(Tools.SELECT);
             selectedElement = null;
@@ -1305,7 +1341,29 @@ function handleMouseUp() {
         isDrawing = false;
         draw();
     }
-    
+
+    if (isDrawing && currentTool === Tools.CIRCLE && circlePreview) {
+        const r = circlePreview.radius < 18 ? Math.round(4 * TILE_SCALE_X) : Math.round(circlePreview.radius);
+        const newCircle = {
+            id: Date.now() + Math.random(),
+            type: Tools.CIRCLE,
+            x: circlePreview.x,
+            y: circlePreview.y,
+            radius: r,
+            color: currentColor
+        };
+        elements.push(newCircle);
+        saveState();
+
+        // Auto switch back to SELECT tool so user can immediately move or resize via edge handle
+        setTool(Tools.SELECT);
+        selectedElement = newCircle;
+        isDraggingElement = false;
+        circlePreview = null;
+        isDrawing = false;
+        draw();
+    }
+
     if (selectedElement && currentTool === Tools.SELECT) {
         saveState();
         arrowDragEnd = null;
@@ -1315,18 +1373,32 @@ function handleMouseUp() {
 // Click detection algorithm for placed elements
 function isClickOnElement(coords, el) {
     const threshold = 15;
-    
+
     if (el.type === Tools.ICON) {
-        const folder = (el.folder || "").toLowerCase();
-        const isSmall = folder.includes("spell") || folder.includes("equipment");
-        const radius = isSmall ? ICON_SIZE / 2 : ICON_SIZE;
+        const folder = (el.folder || el.src || "").toLowerCase();
+        const isSpell = folder.includes("spell");
+        const isEquipment = folder.includes("equipment");
+        let radius = ICON_SIZE; // 36px
+        if (isSpell) {
+            radius = ICON_SIZE / 2; // 18px
+        } else if (isEquipment) {
+            radius = 30; // 30px (diameter 60px)
+        }
         return Math.hypot(coords.x - el.x, coords.y - el.y) < (radius + 6);
     }
-    
+
+    if (el.type === Tools.CIRCLE) {
+        const rx = el.radius || (4 * TILE_SCALE_X);
+        const ry = rx * ISO_Y_RATIO;
+        const dx = coords.x - el.x;
+        const dy = coords.y - el.y;
+        return (Math.pow(dx / (rx + 10), 2) + Math.pow(dy / (ry + 10), 2)) <= 1;
+    }
+
     if (el.type === Tools.XMARK) {
         return Math.hypot(coords.x - el.x, coords.y - el.y) < (el.size / 2 + 10);
     }
-    
+
     if (el.type === Tools.BRUSH && el.points && el.points.length > 1) {
         for (let i = 0; i < el.points.length - 1; i++) {
             const p1 = el.points[i];
@@ -1340,49 +1412,49 @@ function isClickOnElement(coords, el) {
         }
         return false;
     }
-    
+
     if (el.type === Tools.TEXT) {
         ctx.font = `bold ${el.fontSize}px sans-serif`;
         const textWidth = ctx.measureText(el.text).width;
         const h = el.fontSize + 12;
         return coords.x >= el.x - 12 && coords.x <= el.x + textWidth + 12 &&
-               coords.y >= el.y - 12 && coords.y <= el.y + h + 12;
+            coords.y >= el.y - 12 && coords.y <= el.y + h + 12;
     }
-    
+
     if (el.type === Tools.ARROW) {
         // Check endpoints grab handles first
         if (Math.hypot(coords.x - el.x1, coords.y - el.y1) < 26) return true;
         if (Math.hypot(coords.x - el.x2, coords.y - el.y2) < 26) return true;
-        
+
         // Distance from point to line segment
         const x1 = el.x1;
         const y1 = el.y1;
         const x2 = el.x2;
         const y2 = el.y2;
-        
+
         const l2 = Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2);
         if (l2 === 0) return Math.hypot(coords.x - x1, coords.y - y1) < 20;
-        
+
         let t = ((coords.x - x1) * (x2 - x1) + (coords.y - y1) * (y2 - y1)) / l2;
         t = Math.max(0, Math.min(1, t));
-        
+
         const projectionX = x1 + t * (x2 - x1);
         const projectionY = y1 + t * (y2 - y1);
-        
+
         return Math.hypot(coords.x - projectionX, coords.y - projectionY) < 22;
     }
-    
+
     return false;
 }
 
 // Rendering pipeline
 function draw() {
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    
+
     // 1. Draw solid dark background
     ctx.fillStyle = "#0c101c";
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    
+
     // 2. Draw base screenshot (if loaded) or splash image
     if (bgImage) {
         ctx.save();
@@ -1407,7 +1479,7 @@ function draw() {
         ctx.fillText("Atau gunakan tombol 'Upload Base Screenshot' di kanan atas", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 10);
         ctx.restore();
     }
-    
+
     // 3. Draw marker.webp boundary overlay (if alignment mode active OR boundary toggled ON)
     if (isAlignMode || showMarkerOverlay) {
         if (markerImage && markerImage.complete) {
@@ -1416,7 +1488,7 @@ function draw() {
             ctx.drawImage(markerImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
             ctx.restore();
         }
-        
+
         if (isAlignMode) {
             // Alignment Mode Banner Header Inside Canvas
             ctx.save();
@@ -1425,7 +1497,7 @@ function draw() {
             ctx.strokeStyle = "#f59e0b";
             ctx.lineWidth = 2;
             ctx.strokeRect(CANVAS_WIDTH / 2 - 380, 40, 760, 60);
-            
+
             ctx.fillStyle = "#f59e0b";
             ctx.font = "bold 20px 'Outfit', sans-serif";
             ctx.textAlign = "center";
@@ -1434,17 +1506,20 @@ function draw() {
             ctx.restore();
         }
     }
-    
+
     // 4. Draw placed items/drawing elements
     elements.forEach(el => {
         const isSelected = selectedElement && (el.id === selectedElement.id);
-        
+
         switch (el.type) {
             case Tools.BRUSH:
                 drawBrush(el.points, el.color, el.width, isSelected);
                 break;
             case Tools.ARROW:
                 drawArrow(el.x1, el.y1, el.x2, el.y2, el.color, el.width, isSelected);
+                break;
+            case Tools.CIRCLE:
+                drawCircle(el.x, el.y, el.color, el.radius, isSelected);
                 break;
             case Tools.XMARK:
                 drawXMark(el.x, el.y, el.color, el.size, isSelected);
@@ -1457,13 +1532,16 @@ function draw() {
                 break;
         }
     });
-    
-    // 5. Draw active brush or arrow preview
+
+    // 5. Draw active brush, arrow, or circle preview
     if (brushPreview && brushPreview.length > 1) {
         drawBrush(brushPreview, currentColor, currentWidth, false);
     }
     if (arrowPreview) {
         drawArrow(arrowPreview.x1, arrowPreview.y1, arrowPreview.x2, arrowPreview.y2, currentColor, currentWidth, false);
+    }
+    if (circlePreview) {
+        drawCircle(circlePreview.x, circlePreview.y, currentColor, circlePreview.radius, false);
     }
 }
 
@@ -1483,37 +1561,37 @@ function hexToRgba(hex, alpha) {
 
 function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
     ctx.save();
-    
+
     const angle = Math.atan2(y2 - y1, x2 - x1);
     const dist = Math.hypot(x2 - x1, y2 - y1);
-    
+
     // 2 grid tiles total shaft width (1 tile = 20.84px on each side -> halfWidth = 20.84px, total width = 41.68px)
     const halfWidth = TILE_SCALE_X; // 1 tile each side = 2 tiles total width (~41.7px)
-    
+
     // Arrowhead dimensions (wider than shaft for distinct tactical head)
     const headWidth = halfWidth * 2.5; // ~52px wide
     const headLength = Math.min(halfWidth * 2.2, Math.max(30, dist * 0.45));
     const shaftLength = Math.max(0, dist - headLength * 0.65);
-    
+
     ctx.translate(x1, y1);
     ctx.rotate(angle);
-    
+
     // 1. Shaded Corridor (2-Grid wide transparent fill matching chosen color)
     const rgba0 = hexToRgba(color, 0.05);
     const rgbaSoft = hexToRgba(color, 0.22);
     const rgbaCore = hexToRgba(color, 0.45);
     const rgbaSolid = hexToRgba(color, 0.95);
-    
+
     const grad = ctx.createLinearGradient(0, -halfWidth, 0, halfWidth);
     grad.addColorStop(0, rgba0);
     grad.addColorStop(0.2, rgbaSoft);
     grad.addColorStop(0.5, rgbaCore);
     grad.addColorStop(0.8, rgbaSoft);
     grad.addColorStop(1, rgba0);
-    
+
     ctx.fillStyle = grad;
     ctx.fillRect(0, -halfWidth, shaftLength, halfWidth * 2);
-    
+
     // 2. Dashed Outer Border Lines of the 2-Grid Corridor
     ctx.strokeStyle = rgbaSolid;
     ctx.lineWidth = 2;
@@ -1524,7 +1602,7 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
     ctx.moveTo(0, halfWidth);
     ctx.lineTo(shaftLength, halfWidth);
     ctx.stroke();
-    
+
     // 3. Centerline Trajectory (dashed white line along center)
     ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
     ctx.lineWidth = 2;
@@ -1533,7 +1611,7 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
     ctx.moveTo(0, 0);
     ctx.lineTo(shaftLength, 0);
     ctx.stroke();
-    
+
     // 4. Direction flow indicator chevrons along the corridor
     ctx.setLineDash([]);
     ctx.fillStyle = hexToRgba(color, 0.65);
@@ -1546,12 +1624,12 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
         ctx.closePath();
         ctx.fill();
     }
-    
+
     // 5. Arrowhead at the tip (dist, 0)
     const tipX = dist;
     const baseCutX = dist - headLength;
     const baseCenterX = dist - headLength * 0.65;
-    
+
     ctx.beginPath();
     ctx.moveTo(tipX, 0);
     ctx.lineTo(baseCutX, -headWidth / 2);
@@ -1563,9 +1641,9 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2.5;
     ctx.stroke();
-    
+
     ctx.restore();
-    
+
     // 6. Highlight selection with interactive handles to edit endpoints
     if (isSelected) {
         ctx.save();
@@ -1573,9 +1651,9 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
         ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 6]);
         ctx.strokeRect(Math.min(x1, x2) - 16, Math.min(y1, y2) - 16, Math.abs(x2 - x1) + 32, Math.abs(y2 - y1) + 32);
-        
+
         ctx.setLineDash([]);
-        
+
         // Handle Point 1: Start Point (x1, y1)
         ctx.beginPath();
         ctx.arc(x1, y1, 10, 0, Math.PI * 2);
@@ -1584,7 +1662,7 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 3;
         ctx.stroke();
-        
+
         // Handle Point 2: End Tip (x2, y2)
         ctx.beginPath();
         ctx.arc(x2, y2, 10, 0, Math.PI * 2);
@@ -1593,7 +1671,7 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 3;
         ctx.stroke();
-        
+
         ctx.restore();
     }
 }
@@ -1603,9 +1681,9 @@ function drawBrush(points, color, width, isSelected) {
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    
+
     const strokeW = width || 8;
-    
+
     // 1. White outer border outline
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = strokeW + 4;
@@ -1615,7 +1693,7 @@ function drawBrush(points, color, width, isSelected) {
         ctx.lineTo(points[i].x, points[i].y);
     }
     ctx.stroke();
-    
+
     // 2. Colored inner stroke
     ctx.strokeStyle = color;
     ctx.lineWidth = strokeW;
@@ -1625,7 +1703,7 @@ function drawBrush(points, color, width, isSelected) {
         ctx.lineTo(points[i].x, points[i].y);
     }
     ctx.stroke();
-    
+
     // 3. Selection outline
     if (isSelected) {
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -1640,22 +1718,106 @@ function drawBrush(points, color, width, isSelected) {
         ctx.setLineDash([6, 6]);
         ctx.strokeRect(minX - 10, minY - 10, maxX - minX + 20, maxY - minY + 20);
     }
-    
+
+    ctx.restore();
+}
+
+function drawCircle(x, y, color, radius, isSelected) {
+    ctx.save();
+
+    const rx = radius || (4 * TILE_SCALE_X);
+    const ry = rx * ISO_Y_RATIO;
+
+    // 1. Isometric Semi-transparent AoE Area Fill (matching Spells)
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fillStyle = hexToRgba(color, 0.2);
+    ctx.fill();
+
+    // 2. White outer border outline
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 3. Colored inner dashed tactical spell stroke
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 4. Center Bullseye & Isometric Crosshair Dot
+    ctx.setLineDash([]);
+    // Subtle crosshair tick marks aligned with isometric grid
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(x - 9, y);
+    ctx.lineTo(x + 9, y);
+    ctx.moveTo(x, y - 9 * ISO_Y_RATIO);
+    ctx.lineTo(x, y + 9 * ISO_Y_RATIO);
+    ctx.stroke();
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x - 8, y);
+    ctx.lineTo(x + 8, y);
+    ctx.moveTo(x, y - 8 * ISO_Y_RATIO);
+    ctx.lineTo(x, y + 8 * ISO_Y_RATIO);
+    ctx.stroke();
+
+    // Center point dot
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 5. Selection Bounding Isometric Ring & Resize Handle
+    if (isSelected) {
+        // Selection dashed ring
+        ctx.strokeStyle = "#00ffff";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.ellipse(x, y, rx + 6, ry + 6 * ISO_Y_RATIO, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+        // Resize handle on right corner/edge of isometric ellipse
+        const handleX = x + rx;
+        const handleY = y;
+        ctx.beginPath();
+        ctx.arc(handleX, handleY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#00ffff";
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
     ctx.restore();
 }
 
 function drawXMark(x, y, color, size, isSelected) {
     ctx.save();
-    
+
     // Default size is 3x3 building (~88px), but can be resized to 2x2 (~59px), 4x4 (~118px), etc.
     const s = size || 88;
     const halfX = s / 2;
     const halfY = halfX * ISO_Y_RATIO;
     const armW = 2.5; // Ultra-thin, crisp, and sharp lines
-    
+
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    
+
     // 1. Isometric Diamond Base Alignment Guide (terhubung pas ke 4 sudut diagonal bangunan CoC)
     ctx.beginPath();
     ctx.moveTo(x, y - halfY);
@@ -1667,12 +1829,12 @@ function drawXMark(x, y, color, size, isSelected) {
     ctx.lineWidth = 1.2;
     ctx.setLineDash([4, 4]);
     ctx.stroke();
-    
+
     // 2. White border outline for Plus (+) Crosshair
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = armW + 2.5;
     ctx.setLineDash([]);
-    
+
     // Horizontal cross arm
     ctx.beginPath();
     ctx.moveTo(x - halfX * 0.9, y);
@@ -1681,7 +1843,7 @@ function drawXMark(x, y, color, size, isSelected) {
     ctx.moveTo(x, y - halfY * 0.9);
     ctx.lineTo(x, y + halfY * 0.9);
     ctx.stroke();
-    
+
     // 3. Colored solid inner core
     ctx.strokeStyle = color;
     ctx.lineWidth = armW;
@@ -1691,20 +1853,20 @@ function drawXMark(x, y, color, size, isSelected) {
     ctx.moveTo(x, y - halfY * 0.9);
     ctx.lineTo(x, y + halfY * 0.9);
     ctx.stroke();
-    
+
     // Center Bullseye Dot
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
     ctx.arc(x, y, 2, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // 4. Selection Box & Corner Resize Handle
     if (isSelected) {
         ctx.strokeStyle = "#00ffff";
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 4]);
         ctx.strokeRect(x - halfX - 8, y - halfY - 8, s + 16, halfY * 2 + 16);
-        
+
         ctx.setLineDash([]);
         // Resize handle on right corner of diamond (drag to resize 2x2, 3x3, 4x4)
         const handleX = x + halfX;
@@ -1717,54 +1879,54 @@ function drawXMark(x, y, color, size, isSelected) {
         ctx.lineWidth = 2;
         ctx.stroke();
     }
-    
+
     ctx.restore();
 }
 
 function drawText(text, x, y, color, fontSize, isSelected) {
     ctx.save();
-    
+
     ctx.font = `bold ${fontSize}px sans-serif`;
     ctx.textBaseline = "top";
     ctx.textAlign = "left";
-    
+
     const textWidth = ctx.measureText(text).width;
     const h = fontSize + 8;
-    
+
     // Render semi-transparent dark background for extreme readability
     ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
     ctx.fillRect(x - 6, y - 4, textWidth + 12, h);
-    
+
     ctx.fillStyle = color;
     ctx.fillText(text, x, y);
-    
+
     if (isSelected) {
         ctx.strokeStyle = "#00ffff";
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 4]);
         ctx.strokeRect(x - 8, y - 6, textWidth + 16, h + 4);
     }
-    
+
     ctx.restore();
 }
 
 function drawRocketBackpackBeam(startX, startY) {
     const centerX = CANVAS_WIDTH / 2;
     const centerY = CANVAS_HEIGHT / 2;
-    
+
     // Angle pointing from drop point towards center of base
     const angle = Math.atan2(centerY - startY, centerX - startX);
     const distToCenter = Math.hypot(centerX - startX, centerY - startY);
     const beamLength = Math.max(2600, distToCenter * 2.5);
-    
+
     // 4 tiles total width (2 tiles left + 2 tiles right from center line)
     // 2 tiles in canvas px = 2 * TILE_SCALE_X = 2 * 20.84 = 41.68px (total width ~83.36px)
     const halfWidth = 2 * TILE_SCALE_X;
-    
+
     ctx.save();
     ctx.translate(startX, startY);
     ctx.rotate(angle);
-    
+
     // 1. Transparent Tactical Red Laser Beam Corridor
     const grad = ctx.createLinearGradient(0, -halfWidth, 0, halfWidth);
     grad.addColorStop(0, "rgba(239, 68, 68, 0.0)");
@@ -1772,10 +1934,10 @@ function drawRocketBackpackBeam(startX, startY) {
     grad.addColorStop(0.5, "rgba(239, 68, 68, 0.26)");
     grad.addColorStop(0.8, "rgba(239, 68, 68, 0.12)");
     grad.addColorStop(1, "rgba(239, 68, 68, 0.0)");
-    
+
     ctx.fillStyle = grad;
     ctx.fillRect(0, -halfWidth, beamLength, halfWidth * 2);
-    
+
     // 2. Outer Beam Corridor Edges (dashed red border lines)
     ctx.strokeStyle = "rgba(239, 68, 68, 0.75)";
     ctx.lineWidth = 1.5;
@@ -1786,7 +1948,7 @@ function drawRocketBackpackBeam(startX, startY) {
     ctx.moveTo(0, halfWidth);
     ctx.lineTo(beamLength, halfWidth);
     ctx.stroke();
-    
+
     // 3. Center Trajectory Line (dashed white line along center)
     ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
     ctx.lineWidth = 2;
@@ -1795,7 +1957,7 @@ function drawRocketBackpackBeam(startX, startY) {
     ctx.moveTo(0, 0);
     ctx.lineTo(beamLength, 0);
     ctx.stroke();
-    
+
     // 4. Flight direction arrows along the trajectory
     ctx.setLineDash([]);
     ctx.fillStyle = "rgba(239, 68, 68, 0.85)";
@@ -1808,13 +1970,13 @@ function drawRocketBackpackBeam(startX, startY) {
         ctx.closePath();
         ctx.fill();
     }
-    
+
     ctx.restore();
 }
 
 function drawUnitIcon(el, isSelected) {
     let img = imageCache.get(el.src);
-    
+
     if (!img) {
         img = new Image();
         img.onload = () => {
@@ -1827,24 +1989,28 @@ function drawUnitIcon(el, isSelected) {
             draw();
         };
     }
-    
-    // Spells and Equipment are small circular icons (ICON_SIZE / 2)
-    const folder = (el.folder || "").toLowerCase();
+
+    // Spells = 18px (diameter 36), Equipment = 30px (diameter 60), Troops/Heroes = 36px (diameter 72)
+    const folder = (el.folder || el.src || "").toLowerCase();
     const isSpell = folder.includes("spell");
     const isEquipment = folder.includes("equipment");
-    const isSmallIcon = isEquipment || isSpell;
-    const currentRadius = isSmallIcon ? ICON_SIZE / 2 : ICON_SIZE;
-    
+    let currentRadius = ICON_SIZE; // 36px
+    if (isSpell) {
+        currentRadius = ICON_SIZE / 2; // 18px
+    } else if (isEquipment) {
+        currentRadius = 30; // 30px (enlarged diameter 60px)
+    }
+
     const unitKey = (el.name || "").toLowerCase().trim();
     const spellConfig = SPELL_RADII[unitKey];
-    
+
     // Draw Rocket Backpacks linear trajectory projection (passes through center from edge to edge, 4 grid width)
     if (unitKey.includes("rocket backpack") || unitKey.includes("rocket_backpack")) {
         drawRocketBackpackBeam(el.x, el.y);
     } else if (spellConfig) {
         const radiusX = spellConfig.radiusTiles * TILE_SCALE_X;
         const radiusY = spellConfig.radiusTiles * TILE_SCALE_Y;
-        
+
         ctx.save();
         ctx.beginPath();
         // Exact Dimetric ground plane ellipse projection
@@ -1858,23 +2024,23 @@ function drawUnitIcon(el, isSelected) {
         ctx.setLineDash([]);
         ctx.restore();
     }
-    
+
     // Clip circle for icon image
     ctx.save();
     ctx.beginPath();
     ctx.arc(el.x, el.y, currentRadius, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    
+
     if (img && img.complete && img.naturalWidth > 0) {
         ctx.drawImage(img, el.x - currentRadius, el.y - currentRadius, currentRadius * 2, currentRadius * 2);
     } else {
         ctx.fillStyle = "#222d42";
         ctx.fillRect(el.x - currentRadius, el.y - currentRadius, currentRadius * 2, currentRadius * 2);
     }
-    
+
     ctx.restore();
-    
+
     // Render icon white stroke border outline
     ctx.save();
     ctx.beginPath();
@@ -1882,12 +2048,12 @@ function drawUnitIcon(el, isSelected) {
     ctx.strokeStyle = isSelected ? "#00ffff" : "#ffffff";
     ctx.lineWidth = isSelected ? 3 : 2;
     ctx.stroke();
-    
+
     // Render Deployment Order badge on bottom-right corner
-    const badgeR = isSmallIcon ? 8 : 12;
-    const badgeX = el.x + currentRadius - (isSmallIcon ? 2 : 4);
-    const badgeY = el.y + currentRadius - (isSmallIcon ? 2 : 4);
-    
+    const badgeR = isSpell ? 8 : (isEquipment ? 11 : 12);
+    const badgeX = el.x + currentRadius - (isSpell ? 2 : 4);
+    const badgeY = el.y + currentRadius - (isSpell ? 2 : 4);
+
     ctx.beginPath();
     ctx.arc(badgeX, badgeY, badgeR, 0, Math.PI * 2);
     ctx.fillStyle = "#f97316"; // Orange badge (matching attackmapper)
@@ -1895,13 +2061,13 @@ function drawUnitIcon(el, isSelected) {
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2;
     ctx.stroke();
-    
+
     ctx.fillStyle = "#ffffff";
     ctx.font = `bold ${el.orderNum > 9 ? badgeR * 0.85 : badgeR * 1.15}px sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(String(el.orderNum), badgeX, badgeY);
-    
+
     ctx.restore();
 }
 
@@ -1911,40 +2077,40 @@ function saveState() {
     if (undoStack.length >= 25) {
         undoStack.shift();
     }
-    
+
     // Clone elements deeply
     const state = JSON.stringify(elements);
     undoStack.push(state);
-    
+
     // Empty redo stack on new action
     redoStack = [];
 }
 
 function undo() {
     if (undoStack.length <= 1) return; // keep initial state
-    
+
     const currentState = undoStack.pop();
     redoStack.push(currentState);
-    
+
     const previousState = undoStack[undoStack.length - 1];
     elements = JSON.parse(previousState);
-    
+
     // Reset order number based on highest present deploymentOrder
     recalculateDeploymentOrder();
-    
+
     selectedElement = null;
     draw();
 }
 
 function redo() {
     if (redoStack.length === 0) return;
-    
+
     const nextState = redoStack.pop();
     undoStack.push(nextState);
     elements = JSON.parse(nextState);
-    
+
     recalculateDeploymentOrder();
-    
+
     selectedElement = null;
     draw();
 }
@@ -1961,7 +2127,7 @@ function recalculateDeploymentOrder() {
 
 function clearCanvas() {
     if (elements.length === 0) return;
-    
+
     if (confirm("Hapus semua coretan taktis dan penempatan unit di canvas?")) {
         elements = [];
         deploymentOrder = 1;
@@ -1977,11 +2143,11 @@ function downloadPlan() {
         alert("Harap unggah screenshot base CoC atau buat coretan terlebih dahulu sebelum mengunduh.");
         return;
     }
-    
+
     // Draw all layers again without selections highlight
     selectedElement = null;
     draw();
-    
+
     // Export PNG — all images are local (same-origin), no CORS taint
     canvas.toBlob(blob => {
         if (!blob) {
