@@ -1083,8 +1083,9 @@ function handleMouseDown(e) {
             // If zoomed in and clicked on empty canvas, pan canvas smoothly!
             if (canvasUserZoom > 1.05) {
                 isPanningCanvas = true;
-                panStartMouseX = e.clientX;
-                panStartMouseY = e.clientY;
+                // Touch events use e.touches[0].clientX, mouse events use e.clientX
+                panStartMouseX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+                panStartMouseY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
                 panStartCanvasX = canvasPanX;
                 panStartCanvasY = canvasPanY;
                 document.body.style.cursor = "grabbing";
@@ -1168,8 +1169,11 @@ function handleMouseDown(e) {
 
 function handleMouseMove(e) {
     if (isPanningCanvas) {
-        canvasPanX = panStartCanvasX + (e.clientX - panStartMouseX);
-        canvasPanY = panStartCanvasY + (e.clientY - panStartMouseY);
+        // Touch events use e.touches[0].clientX, mouse events use e.clientX
+        const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+        const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
+        canvasPanX = panStartCanvasX + (clientX - panStartMouseX);
+        canvasPanY = panStartCanvasY + (clientY - panStartMouseY);
         updateCanvasTransform();
         return;
     }
