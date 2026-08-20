@@ -202,83 +202,189 @@ function fitCanvasToWorkspace() {
     updateCanvasTransform();
 }
 
-// Load and render units sidebar
+// Category icon mappings
+const categoryIcons = {
+    "Troops": "fa-shield-halved",
+    "Dark Troops": "fa-skull",
+    "Heroes": "fa-crown",
+    "Equipment": "fa-wand-magic-sparkles",
+    "Siege Machines": "fa-truck-monster",
+    "Spells": "fa-flask-vial",
+    "Dark Spells": "fa-biohazard",
+    "Super Troops": "fa-bolt"
+};
+
+// Load and render units unified collapsible accordion sidebar
 function initUI() {
-    const tabsContainer = document.getElementById("tabsContainer");
-    const gridContainer = document.getElementById("unitsGrid");
+    renderAccordionCategories();
     
-    if (!tabsContainer || !gridContainer) return;
+    // Realtime search filter across all accordion categories
+    const searchInput = document.getElementById("unitSearch");
+    const clearSearchBtn = document.getElementById("clearSearchBtn");
     
-    tabsContainer.innerHTML = "";
-    
-    unitCategories.forEach((cat, index) => {
-        const tab = document.createElement("div");
-        tab.className = `tab ${index === 0 ? "active" : ""}`;
-        tab.innerText = cat.name;
-        tab.addEventListener("click", () => {
-            document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-            renderCategoryUnits(cat);
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = query ? "block" : "none";
+            }
+            filterAllCategories(query);
         });
-        tabsContainer.appendChild(tab);
-    });
+    }
     
-    // Render first category by default
-    renderCategoryUnits(unitCategories[0]);
+    if (clearSearchBtn && searchInput) {
+        clearSearchBtn.addEventListener("click", () => {
+            searchInput.value = "";
+            clearSearchBtn.style.display = "none";
+            filterAllCategories("");
+            searchInput.focus();
+        });
+    }
+
+    // Direct wheel scroll handler on the sidebar to ensure 100% reliable scrolling
+    const rightSidebarEl = document.getElementById("rightSidebar");
+    const accordionEl = document.getElementById("accordionCategories");
+    if (rightSidebarEl && accordionEl) {
+        rightSidebarEl.addEventListener("wheel", (e) => {
+            accordionEl.scrollTop += e.deltaY;
+        }, { passive: true });
+    }
 }
 
-function renderCategoryUnits(category, filterQuery = "") {
-    const gridContainer = document.getElementById("unitsGrid");
-    if (!gridContainer) return;
+function renderAccordionCategories() {
+    const container = document.getElementById("accordionCategories");
+    if (!container) return;
     
-    gridContainer.innerHTML = "";
+    container.innerHTML = "";
     
-    const query = filterQuery.toLowerCase().trim();
-    
-    category.files.forEach(file => {
-        const name = file.replace(/\.(png|webp|jpg|jpeg)$/i, "").replace(/_/g, " ");
-        if (query && !name.toLowerCase().includes(query)) return;
+    unitCategories.forEach((cat) => {
+        const iconClass = categoryIcons[cat.name] || "fa-shield-halved";
         
-        const item = document.createElement("div");
-        item.className = "unit-item";
+        const section = document.createElement("div");
+        // All categories collapsed by default for clean presentation
+        section.className = "accordion-section";
+        section.dataset.category = cat.name.toLowerCase();
         
-        const wrapper = document.createElement("div");
-        wrapper.className = "unit-icon-wrapper";
+        // Header Button
+        const header = document.createElement("button");
+        header.type = "button";
+        header.className = "accordion-header";
         
-        const folderEncoded = encodeURIComponent(category.folder);
-        const fileEncoded = encodeURIComponent(file);
-        const imageUrl = `${ASSETS_BASE_URL}/${folderEncoded}/${fileEncoded}`;
+        const titleWrap = document.createElement("div");
+        titleWrap.className = "accordion-title-wrap";
+        titleWrap.innerHTML = `
+            <i class="fa-solid ${iconClass} accordion-icon"></i>
+            <span class="accordion-name">${cat.name}</span>
+            <span class="accordion-badge">${cat.files.length}</span>
+        `;
         
-        const img = document.createElement("img");
-        img.className = "unit-icon";
-        img.src = imageUrl;
-        img.onload = () => {
-            draw();
-        };
-        imageCache.set(imageUrl, img);
+        const chevron = document.createElement("i");
+        chevron.className = "fa-solid fa-chevron-down accordion-chevron";
         
-        wrapper.appendChild(img);
-        item.appendChild(wrapper);
+        header.appendChild(titleWrap);
+        header.appendChild(chevron);
         
-        const nameDiv = document.createElement("div");
-        nameDiv.className = "unit-name";
-        nameDiv.innerText = name;
-        item.appendChild(nameDiv);
-        
-        item.addEventListener("click", () => {
-            document.querySelectorAll(".unit-item").forEach(u => u.classList.remove("active"));
-            item.classList.add("active");
-            
-            // Set tool to placing icon & exit align mode so clicking canvas immediately places icon
-            window.selectedUnit = {
-                name: name,
-                src: imageUrl,
-                folder: category.folder
-            };
-            setTool(Tools.ICON);
+        // Single-expand exclusive accordion: opens clicked, closes others
+        header.addEventListener("click", () => {
+            const wasActive = section.classList.contains("active");
+            document.querySelectorAll(".accordion-section").forEach(s => s.classList.remove("active"));
+            if (!wasActive) {
+                section.classList.add("active");
+            }
         });
         
-        gridContainer.appendChild(item);
+        // Body Grid
+        const body = document.createElement("div");
+        body.className = "accordion-body";
+        
+        const grid = document.createElement("div");
+        grid.className = "accordion-grid";
+        
+        cat.files.forEach(file => {
+            const name = file.replace(/\.(png|webp|jpg|jpeg)$/i, "").replace(/_/g, " ");
+            const folderEncoded = encodeURIComponent(cat.folder);
+            const fileEncoded = encodeURIComponent(file);
+            const imageUrl = `${ASSETS_BASE_URL}/${folderEncoded}/${fileEncoded}`;
+            
+            const item = document.createElement("div");
+            item.className = "unit-item";
+            item.dataset.name = name.toLowerCase();
+            item.title = name;
+            
+            const wrapper = document.createElement("div");
+            wrapper.className = "unit-icon-wrapper";
+            
+            const img = document.createElement("img");
+            img.className = "unit-icon";
+            img.src = imageUrl;
+            img.loading = "lazy";
+            img.alt = name;
+            img.onload = () => draw();
+            imageCache.set(imageUrl, img);
+            
+            wrapper.appendChild(img);
+            item.appendChild(wrapper);
+            
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "unit-name";
+            nameDiv.innerText = name;
+            nameDiv.title = name;
+            item.appendChild(nameDiv);
+            
+            item.addEventListener("click", () => {
+                document.querySelectorAll(".unit-item").forEach(u => u.classList.remove("active"));
+                item.classList.add("active");
+                
+                window.selectedUnit = {
+                    name: name,
+                    src: imageUrl,
+                    folder: cat.folder
+                };
+                setTool(Tools.ICON);
+                
+                // On mobile landscape, auto close drawer after selecting unit so canvas is immediately visible
+                const rightSidebar = document.getElementById("rightSidebar");
+                if (rightSidebar && window.innerWidth <= 980) {
+                    rightSidebar.classList.remove("open");
+                }
+            });
+            
+            grid.appendChild(item);
+        });
+        
+        body.appendChild(grid);
+        section.appendChild(header);
+        section.appendChild(body);
+        container.appendChild(section);
+    });
+}
+
+function filterAllCategories(query) {
+    document.querySelectorAll(".accordion-section").forEach(section => {
+        let hasMatch = false;
+        const items = section.querySelectorAll(".unit-item");
+        
+        items.forEach(item => {
+            const name = item.dataset.name || "";
+            if (!query || name.includes(query)) {
+                item.style.display = "flex";
+                hasMatch = true;
+            } else {
+                item.style.display = "none";
+            }
+        });
+        
+        if (query) {
+            if (hasMatch) {
+                section.style.display = "block";
+                section.classList.add("active"); // auto expand matching category
+            } else {
+                section.style.display = "none";
+            }
+        } else {
+            section.style.display = "block";
+            section.classList.remove("active"); // collapse when search cleared
+        }
     });
 }
 
@@ -526,6 +632,75 @@ function setupEventListeners() {
         workspaceEl.addEventListener("contextmenu", (e) => {
             if (isPanningCanvas || canvasUserZoom > 1.05) {
                 e.preventDefault();
+            }
+        });
+    }
+
+    // Touch Interactivity: 1-finger draw/drag, 2-finger pinch-to-zoom
+    let initialPinchDistance = 0;
+    let initialPinchZoom = 1.0;
+    
+    canvas.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            initialPinchDistance = Math.hypot(dx, dy);
+            initialPinchZoom = canvasUserZoom;
+        } else if (e.touches.length === 1) {
+            handleMouseDown(e);
+        }
+    }, { passive: false });
+    
+    canvas.addEventListener("touchmove", (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const currentDist = Math.hypot(dx, dy);
+            if (initialPinchDistance > 0) {
+                const factor = currentDist / initialPinchDistance;
+                canvasUserZoom = Math.max(0.5, Math.min(3.5, initialPinchZoom * factor));
+                updateCanvasTransform();
+            }
+        } else if (e.touches.length === 1) {
+            handleMouseMove(e);
+        }
+    }, { passive: false });
+    
+    canvas.addEventListener("touchend", (e) => {
+        if (e.touches.length < 2) {
+            initialPinchDistance = 0;
+        }
+        handleMouseUp();
+    }, { passive: false });
+
+    // Mobile Landscape Right Sidebar Toggles
+    const rightSidebar = document.getElementById("rightSidebar");
+    const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
+    const closeRightSidebarBtn = document.getElementById("closeRightSidebarBtn");
+    
+    if (mobileSidebarToggle && rightSidebar) {
+        mobileSidebarToggle.addEventListener("click", () => {
+            rightSidebar.classList.toggle("open");
+        });
+    }
+    if (closeRightSidebarBtn && rightSidebar) {
+        closeRightSidebarBtn.addEventListener("click", () => {
+            rightSidebar.classList.remove("open");
+        });
+    }
+    
+    // Fullscreen Toggle
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener("click", () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                document.exitFullscreen().catch(err => console.log(err));
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
             }
         });
     }

@@ -24,17 +24,23 @@
         <div class="header-controls">
             <!-- Hidden input for file selection -->
             <input type="file" id="fileInput" accept="image/*" style="display: none;" />
-            <button class="btn" id="uploadBtn">
-                <i class="fa-solid fa-image"></i> Upload Base Screenshot
+            <button class="btn" id="uploadBtn" title="Unggah Screenshot Base">
+                <i class="fa-solid fa-image"></i> <span class="btn-text">Upload Base</span>
             </button>
-            <button class="btn btn-secondary" id="alignBtn">
-                Align Base Grid
+            <button class="btn btn-secondary" id="alignBtn" title="Posisikan Grid Base">
+                <span class="btn-text">Align Grid</span>
             </button>
-            <button class="btn btn-secondary" id="toggleBoundaryBtn">
-                <i class="fa-solid fa-border-all"></i> Toggle Boundary
+            <button class="btn btn-secondary" id="toggleBoundaryBtn" title="Tampilkan/Sembunyikan Batas Merah">
+                <i class="fa-solid fa-border-all"></i> <span class="btn-text">Boundary</span>
             </button>
-            <button class="btn btn-primary" id="downloadBtn">
-                <i class="fa-solid fa-circle-arrow-down"></i> Download Plan
+            <button class="btn btn-primary" id="downloadBtn" title="Download Gambar Strategi">
+                <i class="fa-solid fa-circle-arrow-down"></i> <span class="btn-text">Download</span>
+            </button>
+            <button class="btn btn-icon" id="fullscreenBtn" title="Mode Layar Penuh">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+            <button class="btn btn-icon mobile-only-btn" id="mobileSidebarToggle" title="Buka/Tutup Pasukan">
+                <i class="fa-solid fa-users"></i>
             </button>
         </div>
     </header>
@@ -43,7 +49,7 @@
     <div class="app-container">
         
         <!-- Left Sidebar: Drawing & Action Tools -->
-        <aside class="sidebar left-sidebar">
+        <aside class="sidebar left-sidebar" id="leftSidebar">
             <div class="tool-group">
                 <button class="tool-btn active" data-tool="select" data-tooltip="Pilih & Pindahkan (Esc)">
                     <i class="fa-solid fa-arrow-pointer"></i>
@@ -73,38 +79,29 @@
                     <!-- Radiant Orange -->
                     <div class="color-swatch" data-color="#f97316" style="background-color: #f97316;"></div>
                     <!-- Emerald Green -->
-                    <div class="color-swatch" data-color="#22c55e" style="background-color: #22c55e;"></div>
-                    <!-- Lightning Blue -->
+                    <div class="color-swatch" data-color="#10b981" style="background-color: #10b981;"></div>
+                    <!-- Royal Blue -->
                     <div class="color-swatch" data-color="#3b82f6" style="background-color: #3b82f6;"></div>
-                    <!-- Ghost White -->
+                    <!-- Radiant Yellow -->
+                    <div class="color-swatch" data-color="#eab308" style="background-color: #eab308;"></div>
+                    <!-- Pure White -->
                     <div class="color-swatch" data-color="#ffffff" style="background-color: #ffffff;"></div>
-                    <!-- Obsidian Black -->
-                    <div class="color-swatch" data-color="#000000" style="background-color: #000000;"></div>
                 </div>
                 
-                <div class="tool-group" style="margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-                    <button class="tool-btn" id="undoBtn" data-tooltip="Undo (Ctrl+Z)">
-                        <i class="fa-solid fa-rotate-left"></i>
-                    </button>
-                    <button class="tool-btn" id="redoBtn" data-tooltip="Redo (Ctrl+Y)">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                    <button class="tool-btn" id="clearBtn" data-tooltip="Bersihkan Semua">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                    <button class="tool-btn" id="helpBtn" onclick="document.getElementById('helpModal').classList.add('show')" data-tooltip="Panduan Cepat">
-                        <i class="fa-solid fa-circle-question"></i>
-                    </button>
+                <div class="action-buttons">
+                    <button class="action-btn" id="undoBtn" data-tooltip="Urungkan (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button class="action-btn" id="redoBtn" data-tooltip="Ulangi (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
+                    <button class="action-btn" id="clearBtn" data-tooltip="Hapus Semua Marker"><i class="fa-solid fa-trash"></i></button>
+                    <button class="action-btn" id="helpBtn" data-tooltip="Bantuan & Hotkeys"><i class="fa-solid fa-circle-question"></i></button>
                 </div>
             </div>
         </aside>
         
-        <!-- Center Canvas Workspace -->
-        <main class="workspace">
-            <!-- Drag and drop base image overlay detector -->
-            <div class="drag-overlay" id="dragOverlay">
+        <!-- Center Workspace: Interactive HTML5 Canvas Planner -->
+        <main class="workspace" id="workspace">
+            <div class="drag-drop-overlay" id="dragOverlay">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
-                <p>Lepaskan tangkapan layar base CoC untuk di-upload</p>
+                <h2>Lepaskan screenshot base CoC di sini</h2>
             </div>
             
             <!-- Scaling Container for Canvas -->
@@ -123,7 +120,7 @@
                     <button class="zoom-btn" id="zoomResetBtn" title="Fit to Screen"><i class="fa-solid fa-expand"></i> Fit</button>
                     <button class="zoom-btn" id="zoomInBtn" title="Zoom In (Scroll Up)"><i class="fa-solid fa-plus"></i></button>
                 </div>
-                <div class="floater">
+                <div class="floater floater-tip">
                     <span>Tip:</span>
                     <strong>Scroll mouse untuk Zoom</strong>
                 </div>
@@ -137,20 +134,24 @@
             </div>
         </main>
         
-        <!-- Right Sidebar: CoC Units Selection Panel -->
-        <aside class="sidebar right-sidebar">
-            <div class="search-container">
-                <input type="text" id="unitSearch" class="search-input" placeholder="Cari unit pasukan/spell..." />
+        <!-- Right Sidebar: CoC Units Unified Collapsible Accordion -->
+        <aside class="sidebar right-sidebar" id="rightSidebar">
+            <div class="sidebar-top-bar">
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="unitSearch" class="search-input" placeholder="Cari pasukan, hero, spell..." autocomplete="off" />
+                    <button class="search-clear-btn" id="clearSearchBtn" style="display: none;" title="Hapus Pencarian">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <button class="sidebar-action-btn mobile-sidebar-close" id="closeRightSidebarBtn" title="Tutup Panel">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
             
-            <!-- Scrollable Category Tabs -->
-            <div class="tabs-container" id="tabsContainer">
-                <!-- Programmatically generated tabs -->
-            </div>
-            
-            <!-- Units grid selector -->
-            <div class="units-grid" id="unitsGrid">
-                <!-- Programmatically generated items -->
+            <!-- Unified Accordion Container -->
+            <div class="accordion-categories" id="accordionCategories">
+                <!-- Programmatically generated accordion items with icons and collapsible headers -->
             </div>
         </aside>
         
