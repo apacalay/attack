@@ -162,6 +162,7 @@ window.addEventListener("DOMContentLoaded", () => {
     setupEventListeners();
     saveState(); // save initial empty state
     draw(); // Render splash image immediately if already loaded
+    setupRotationAndFullscreen();
 });
 
 function initCanvas() {
@@ -959,6 +960,11 @@ function loadBaseImageFile(file) {
 
             updateZoomIndicator();
             draw();
+
+            // Check fullscreen recommendation toast for mobile
+            if (typeof window.checkFullscreenToast === "function") {
+                window.checkFullscreenToast();
+            }
         };
         img.src = event.target.result;
     };
@@ -2189,3 +2195,111 @@ function downloadPlan() {
         setTimeout(() => URL.revokeObjectURL(url), 100);
     }, "image/png", 0.95);
 }
+
+// Mobile Rotation Overlay & Fullscreen Recommendation Helper
+function setupRotationAndFullscreen() {
+    const rotateFullscreenBtn = document.getElementById("rotateFullscreenBtn");
+    const toastFullscreenBtn = document.getElementById("toastFullscreenBtn");
+    const toastCloseBtn = document.getElementById("toastCloseBtn");
+    const fullscreenToast = document.getElementById("fullscreenToast");
+
+    function requestAppFullscreen() {
+        const docEl = document.documentElement;
+        const requestFS = docEl.requestFullscreen || 
+                          docEl.webkitRequestFullscreen || 
+                          docEl.mozRequestFullScreen || 
+                          docEl.msRequestFullscreen;
+
+        if (requestFS) {
+            requestFS.call(docEl)
+                .then(() => {
+                    const btn = document.getElementById("fullscreenBtn");
+                    if (btn) btn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+                    if (fullscreenToast) fullscreenToast.classList.remove("show");
+                })
+                .catch(err => {
+                    console.warn("Fullscreen request rejected or failed:", err);
+                });
+        } else {
+            // Pseudo-fullscreen fallback or alert for unsupported devices (e.g. iOS iPhone)
+            alert("Fullscreen Mode is not fully supported on this device/browser. Please try adding this page to your Home Screen.");
+        }
+    }
+
+    if (rotateFullscreenBtn) {
+        rotateFullscreenBtn.addEventListener("click", requestAppFullscreen);
+    }
+    if (toastFullscreenBtn) {
+        toastFullscreenBtn.addEventListener("click", requestAppFullscreen);
+    }
+    if (toastCloseBtn) {
+        toastCloseBtn.addEventListener("click", () => {
+            if (fullscreenToast) {
+                fullscreenToast.classList.remove("show");
+                // Dismiss persistence for current session
+                sessionStorage.setItem("fullscreen_toast_dismissed", "true");
+            }
+        });
+    }
+
+    // Function to check orientation and show recommendation toast
+    function checkFullscreenToast() {
+        if (!fullscreenToast) return;
+
+        const isMobile = window.matchMedia("(max-width: 980px)").matches;
+        const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+        const isFullscreen = !!(document.fullscreenElement || 
+                                document.webkitFullscreenElement || 
+                                document.mozFullScreenElement || 
+                                document.msFullscreenElement);
+        const isDismissed = sessionStorage.getItem("fullscreen_toast_dismissed") === "true";
+        const isImageLoaded = bgImage !== null;
+
+        if (isMobile && isLandscape && isImageLoaded && !isFullscreen && !isDismissed) {
+            // Slight delay to ensure layout settles after rotation
+            setTimeout(() => {
+                const currentFS = !!(document.fullscreenElement || 
+                                     document.webkitFullscreenElement || 
+                                     document.mozFullScreenElement || 
+                                     document.msFullscreenElement);
+                const currentImageLoaded = bgImage !== null;
+                if (!currentFS && currentImageLoaded && sessionStorage.getItem("fullscreen_toast_dismissed") !== "true") {
+                    fullscreenToast.classList.add("show");
+                }
+            }, 600);
+        } else {
+            fullscreenToast.classList.remove("show");
+        }
+    }
+
+    // Expose function globally so it can be triggered on base image upload
+    window.checkFullscreenToast = checkFullscreenToast;
+
+    // Listen to window size changes, orientation shifts, and fullscreen status updates
+    window.addEventListener("resize", checkFullscreenToast);
+    window.addEventListener("orientationchange", checkFullscreenToast);
+
+    const fsEvents = ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"];
+    fsEvents.forEach(evt => {
+        document.addEventListener(evt, () => {
+            const isFullscreen = !!(document.fullscreenElement || 
+                                    document.webkitFullscreenElement || 
+                                    document.mozFullScreenElement || 
+                                    document.msFullscreenElement);
+            const btn = document.getElementById("fullscreenBtn");
+            if (btn) {
+                if (isFullscreen) {
+                    btn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+                    if (fullscreenToast) fullscreenToast.classList.remove("show");
+                } else {
+                    btn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+                    checkFullscreenToast();
+                }
+            }
+        });
+    });
+
+    // Run on initial load
+    checkFullscreenToast();
+}
+

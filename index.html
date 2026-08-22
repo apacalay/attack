@@ -1,23 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <title>Clash of Clans Tactical Attack Planner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Plan your Clash of Clans tactical attacks interactively with grid boundaries and unit maker." />
+    <meta name="description"
+        content="Plan your Clash of Clans tactical attacks interactively with grid boundaries and unit maker." />
     <!-- FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <!-- CSS Styles -->
     <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
+
+    <!-- Device Rotation Overlay for Mobile -->
+    <div id="rotateDeviceOverlay" class="rotate-overlay">
+        <div class="rotate-icon-container">
+            <svg class="rotate-svg animate-spin-custom" fill="none" viewBox="0 0 80 80">
+                <rect x="8" y="20" width="40" height="64" rx="6" stroke="currentColor" stroke-width="3" fill="none">
+                </rect>
+                <rect x="32" y="4" width="64" height="40" rx="6" stroke="currentColor" stroke-width="3"
+                    stroke-dasharray="6 4" fill="none" opacity="0.4"></rect>
+                <path d="M56 24 L72 32 L56 40" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+            </svg>
+        </div>
+        <div class="rotate-text-section">
+            <h2 class="rotate-title">Rotate Your Device</h2>
+            <p class="rotate-subtitle">Attack Planner requires landscape mode. Please rotate your phone horizontally.
+            </p>
+        </div>
+        <div class="bounce-dots">
+            <div class="bounce-dot" style="animation-delay: 0ms;"></div>
+            <div class="bounce-dot" style="animation-delay: 150ms;"></div>
+            <div class="bounce-dot" style="animation-delay: 300ms;"></div>
+        </div>
+    </div>
 
     <!-- Header Dashboard -->
     <header>
         <div class="logo-section">
             <h1><i class="fa-solid fa-crosshairs"></i> CoC <span>Attack Planner</span></h1>
         </div>
-        
+
         <div class="header-controls">
             <!-- Hidden input for file selection -->
             <input type="file" id="fileInput" accept="image/*" style="display: none;" />
@@ -44,7 +71,7 @@
 
     <!-- Main Workspace Container -->
     <div class="app-container">
-        
+
         <!-- Left Sidebar: Drawing & Action Tools -->
         <aside class="sidebar left-sidebar" id="leftSidebar">
             <div class="tool-group">
@@ -70,7 +97,7 @@
                     <i class="fa-solid fa-eraser"></i>
                 </button>
             </div>
-            
+
             <!-- Tool Settings (Color & Actions) -->
             <div class="tool-settings">
                 <div class="color-palette">
@@ -87,16 +114,20 @@
                     <!-- Pure White -->
                     <div class="color-swatch" data-color="#ffffff" style="background-color: #ffffff;"></div>
                 </div>
-                
+
                 <div class="action-buttons">
-                    <button class="action-btn" id="undoBtn" data-tooltip="Undo (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
-                    <button class="action-btn" id="redoBtn" data-tooltip="Redo (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
-                    <button class="action-btn" id="clearBtn" data-tooltip="Clear All Markers"><i class="fa-solid fa-trash"></i></button>
-                    <button class="action-btn" id="helpBtn" data-tooltip="Help & Hotkeys"><i class="fa-solid fa-circle-question"></i></button>
+                    <button class="action-btn" id="undoBtn" data-tooltip="Undo (Ctrl+Z)"><i
+                            class="fa-solid fa-rotate-left"></i></button>
+                    <button class="action-btn" id="redoBtn" data-tooltip="Redo (Ctrl+Y)"><i
+                            class="fa-solid fa-rotate-right"></i></button>
+                    <button class="action-btn" id="clearBtn" data-tooltip="Clear All Markers"><i
+                            class="fa-solid fa-trash"></i></button>
+                    <button class="action-btn" id="helpBtn" data-tooltip="Help & Hotkeys"><i
+                            class="fa-solid fa-circle-question"></i></button>
                 </div>
             </div>
         </aside>
-        
+
         <!-- Center Workspace: Interactive HTML5 Canvas Planner -->
         <main class="workspace" id="workspace">
             <!-- Welcome/Choose Image Overlay -->
@@ -104,7 +135,8 @@
                 <div class="welcome-card">
                     <h2>Attack Planner</h2>
                     <div class="welcome-icon-box">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
                             <circle cx="9" cy="9" r="2"></circle>
                             <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
@@ -113,7 +145,8 @@
                     <p class="main-text">Upload a Base Screenshot</p>
                     <p class="sub-text">Please align the village to the grid borders after uploading</p>
                     <button class="welcome-btn" id="welcomeChooseBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="17 8 12 3 7 8"></polyline>
                             <line x1="12" x2="12" y1="3" y2="15"></line>
@@ -126,47 +159,45 @@
                 <i class="fa-solid fa-cloud-arrow-up"></i>
                 <h2>Drop CoC base screenshot here</h2>
             </div>
-            
+
             <!-- Scaling Container for Canvas -->
             <div class="canvas-container">
                 <canvas id="plannerCanvas"></canvas>
             </div>
-            
+
             <!-- Floating Indicators & Controls -->
             <div class="floating-controls" id="floatingControls">
                 <div class="floater align-indicator" id="alignIndicator" style="display: none;">
                     <i class="fa-solid fa-arrows-up-down-left-right"></i>
                     <span>Align Mode</span>
                 </div>
-                <div class="floater">
-                    <span>Zoom:</span>
-                    <strong class="zoom-indicator" id="zoomPercentage">100%</strong>
-                </div>
                 <div class="floater zoom-button-group">
-                    <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out (Scroll Down)"><i class="fa-solid fa-minus"></i></button>
-                    <button class="zoom-btn" id="zoomResetBtn" title="Fit to Screen"><i class="fa-solid fa-expand"></i> Fit</button>
-                    <button class="zoom-btn" id="zoomInBtn" title="Zoom In (Scroll Up)"><i class="fa-solid fa-plus"></i></button>
-                </div>
-                <div class="floater floater-tip">
-                    <span>Tip:</span>
-                    <strong>Scroll mouse to Zoom</strong>
+                    <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out (Scroll Down)"><i
+                            class="fa-solid fa-minus"></i></button>
+                    <button class="zoom-btn" id="zoomResetBtn" title="Fit to Screen"><i class="fa-solid fa-expand"></i>
+                        Fit</button>
+                    <button class="zoom-btn" id="zoomInBtn" title="Zoom In (Scroll Up)"><i
+                            class="fa-solid fa-plus"></i></button>
                 </div>
             </div>
-            
+
             <!-- Popover Text Input -->
             <div class="text-popover" id="textPopover">
                 <input type="text" id="popoverInput" placeholder="Write tactical note..." />
-                <button class="btn btn-primary" id="popoverSave" style="padding: 6px 12px;"><i class="fa-solid fa-check"></i></button>
-                <button class="btn" id="popoverCancel" style="padding: 6px 12px;"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn btn-primary" id="popoverSave" style="padding: 6px 12px;"><i
+                        class="fa-solid fa-check"></i></button>
+                <button class="btn" id="popoverCancel" style="padding: 6px 12px;"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
         </main>
-        
+
         <!-- Right Sidebar: CoC Units Unified Collapsible Accordion -->
         <aside class="sidebar right-sidebar" id="rightSidebar">
             <div class="sidebar-top-bar">
                 <div class="search-container">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="unitSearch" class="search-input" placeholder="Search troops, heroes, spells..." autocomplete="off" />
+                    <input type="text" id="unitSearch" class="search-input"
+                        placeholder="Search troops, heroes, spells..." autocomplete="off" />
                     <button class="search-clear-btn" id="clearSearchBtn" style="display: none;" title="Clear Search">
                         <i class="fa-solid fa-circle-xmark"></i>
                     </button>
@@ -175,13 +206,13 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            
+
             <!-- Unified Accordion Container -->
             <div class="accordion-categories" id="accordionCategories">
                 <!-- Programmatically generated accordion items with icons and collapsible headers -->
             </div>
         </aside>
-        
+
     </div>
 
     <!-- Help & Keyboard Shortcuts Modal -->
@@ -194,10 +225,14 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p><strong>1. Upload Base Screenshot:</strong> Drag & drop your CoC base image onto the center canvas, or use the upload button.</p>
-                <p><strong>2. Adjust Grid Boundaries:</strong> Align the isometric grid with the base. Drag the base using the mouse, and zoom in/out using the scroll wheel. Once aligned, click the <strong>"Lock Grid"</strong> button.</p>
-                <p><strong>3. Create Strategy:</strong> Use the left menu to select drawing tools or add text notes, then use the right panel to place troops, spells, and heroes with automatic attack ordering.</p>
-                
+                <p><strong>1. Upload Base Screenshot:</strong> Drag & drop your CoC base image onto the center canvas,
+                    or use the upload button.</p>
+                <p><strong>2. Adjust Grid Boundaries:</strong> Align the isometric grid with the base. Drag the base
+                    using the mouse, and zoom in/out using the scroll wheel. Once aligned, click the <strong>"Lock
+                        Grid"</strong> button.</p>
+                <p><strong>3. Create Strategy:</strong> Use the left menu to select drawing tools or add text notes,
+                    then use the right panel to place troops, spells, and heroes with automatic attack ordering.</p>
+
                 <div class="hotkey-list" style="margin-top: 16px;">
                     <h3>Keyboard Shortcuts (Hotkeys):</h3>
                     <div class="hotkey-item">
@@ -221,7 +256,20 @@
         </div>
     </div>
 
+    <!-- Fullscreen Recommendation Toast for Mobile Landscape -->
+    <div id="fullscreenToast" class="fullscreen-toast">
+        <div class="toast-content">
+            <i class="fa-solid fa-lightbulb toast-icon"></i>
+            <span>Use Fullscreen mode for the best planning area!</span>
+        </div>
+        <div class="toast-actions">
+            <button class="btn btn-sm btn-primary" id="toastFullscreenBtn">Go Fullscreen</button>
+            <button class="toast-close" id="toastCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
     <!-- Script Controller -->
     <script src="planner.js"></script>
 </body>
+
 </html>
