@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <title>Clash of Clans Tactical Attack Planner</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Rencanakan serangan taktis Clash of Clans Anda secara interaktif dengan grid boundaries dan unit maker." />
+    <meta name="description" content="Plan your Clash of Clans tactical attacks interactively with grid boundaries and unit maker." />
     <!-- FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <!-- CSS Styles -->
@@ -16,34 +16,27 @@
     <header>
         <div class="logo-section">
             <h1><i class="fa-solid fa-crosshairs"></i> CoC <span>Attack Planner</span></h1>
-            <div id="alignBanner" class="align-banner" style="display: none;">
-                <i class="fa-solid fa-arrows-up-down-left-right"></i>
-                <span>Align Mode</span>
-                <button class="btn btn-icon btn-sm" id="alignZoomOut" title="Perkecil Base"><i class="fa-solid fa-minus"></i></button>
-                <button class="btn btn-icon btn-sm" id="alignZoomIn" title="Perbesar Base"><i class="fa-solid fa-plus"></i></button>
-                <button class="btn btn-sm" id="alignReset" title="Reset Ukuran Base"><i class="fa-solid fa-rotate-left"></i> Fit</button>
-            </div>
         </div>
         
         <div class="header-controls">
             <!-- Hidden input for file selection -->
             <input type="file" id="fileInput" accept="image/*" style="display: none;" />
-            <button class="btn" id="uploadBtn" title="Unggah Screenshot Base">
+            <button class="btn" id="uploadBtn" title="Upload Base Screenshot">
                 <i class="fa-solid fa-image"></i> <span class="btn-text">Upload Base</span>
             </button>
-            <button class="btn btn-secondary" id="alignBtn" title="Posisikan Grid Base">
-                <span class="btn-text">Align Grid</span>
+            <button class="btn btn-secondary" id="alignBtn" title="Align Grid Base">
+                <i class="fa-solid fa-unlock"></i> <span class="btn-text">Align Grid</span>
             </button>
-            <button class="btn btn-secondary" id="toggleBoundaryBtn" title="Tampilkan/Sembunyikan Batas Merah">
-                <i class="fa-solid fa-border-all"></i> <span class="btn-text">Boundary</span>
+            <button class="btn btn-secondary" id="toggleBoundaryBtn" title="Show/Hide Red Boundary">
+                <i class="fa-solid fa-border-all"></i>
             </button>
-            <button class="btn btn-primary" id="downloadBtn" title="Download Gambar Strategi">
+            <button class="btn btn-primary" id="downloadBtn" title="Download Strategy Image">
                 <i class="fa-solid fa-circle-arrow-down"></i> <span class="btn-text">Download</span>
             </button>
-            <button class="btn btn-icon" id="fullscreenBtn" title="Mode Layar Penuh">
+            <button class="btn btn-icon" id="fullscreenBtn" title="Fullscreen Mode">
                 <i class="fa-solid fa-expand"></i>
             </button>
-            <button class="btn btn-icon mobile-only-btn" id="mobileSidebarToggle" title="Buka/Tutup Pasukan">
+            <button class="btn btn-icon mobile-only-btn" id="mobileSidebarToggle" title="Open/Close Troops Panel">
                 <i class="fa-solid fa-users"></i>
             </button>
         </div>
@@ -55,25 +48,25 @@
         <!-- Left Sidebar: Drawing & Action Tools -->
         <aside class="sidebar left-sidebar" id="leftSidebar">
             <div class="tool-group">
-                <button class="tool-btn active" data-tool="select" data-tooltip="Pilih & Pindahkan (Esc)">
+                <button class="tool-btn active" data-tool="select" data-tooltip="Select & Move (Esc)">
                     <i class="fa-solid fa-arrow-pointer"></i>
                 </button>
-                <button class="tool-btn" data-tool="brush" data-tooltip="Coretan / Brush Bebas">
+                <button class="tool-btn" data-tool="brush" data-tooltip="Free Draw / Brush">
                     <i class="fa-solid fa-paintbrush"></i>
                 </button>
-                <button class="tool-btn" data-tool="arrow" data-tooltip="Panah Arah Serangan (2 Grid)">
+                <button class="tool-btn" data-tool="arrow" data-tooltip="Attack Arrow (2 Grid)">
                     <i class="fa-solid fa-arrow-right-long"></i>
                 </button>
-                <button class="tool-btn" data-tool="circle" data-tooltip="Lingkaran Area / Radius">
+                <button class="tool-btn" data-tool="circle" data-tooltip="Area Circle / Radius">
                     <i class="fa-solid fa-circle-dot"></i>
                 </button>
-                <button class="tool-btn" data-tool="xmark" data-tooltip="Target Plus Bangunan (+)">
+                <button class="tool-btn" data-tool="xmark" data-tooltip="Plus Target (+)">
                     <i class="fa-solid fa-plus"></i>
                 </button>
-                <button class="tool-btn" data-tool="text" data-tooltip="Tambahkan Catatan Teks">
+                <button class="tool-btn" data-tool="text" data-tooltip="Add Text Note">
                     <i class="fa-solid fa-font"></i>
                 </button>
-                <button class="tool-btn" data-tool="eraser" data-tooltip="Penghapus Marker">
+                <button class="tool-btn" data-tool="eraser" data-tooltip="Marker Eraser">
                     <i class="fa-solid fa-eraser"></i>
                 </button>
             </div>
@@ -96,19 +89,42 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <button class="action-btn" id="undoBtn" data-tooltip="Urungkan (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
-                    <button class="action-btn" id="redoBtn" data-tooltip="Ulangi (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
-                    <button class="action-btn" id="clearBtn" data-tooltip="Hapus Semua Marker"><i class="fa-solid fa-trash"></i></button>
-                    <button class="action-btn" id="helpBtn" data-tooltip="Bantuan & Hotkeys"><i class="fa-solid fa-circle-question"></i></button>
+                    <button class="action-btn" id="undoBtn" data-tooltip="Undo (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button class="action-btn" id="redoBtn" data-tooltip="Redo (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
+                    <button class="action-btn" id="clearBtn" data-tooltip="Clear All Markers"><i class="fa-solid fa-trash"></i></button>
+                    <button class="action-btn" id="helpBtn" data-tooltip="Help & Hotkeys"><i class="fa-solid fa-circle-question"></i></button>
                 </div>
             </div>
         </aside>
         
         <!-- Center Workspace: Interactive HTML5 Canvas Planner -->
         <main class="workspace" id="workspace">
+            <!-- Welcome/Choose Image Overlay -->
+            <div class="welcome-overlay" id="welcomeOverlay">
+                <div class="welcome-card">
+                    <h2>Attack Planner</h2>
+                    <div class="welcome-icon-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                            <circle cx="9" cy="9" r="2"></circle>
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                        </svg>
+                    </div>
+                    <p class="main-text">Upload a Base Screenshot</p>
+                    <p class="sub-text">Please align the village to the grid borders after uploading</p>
+                    <button class="welcome-btn" id="welcomeChooseBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" x2="12" y1="3" y2="15"></line>
+                        </svg> Choose Image
+                    </button>
+                </div>
+            </div>
+
             <div class="drag-drop-overlay" id="dragOverlay">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
-                <h2>Lepaskan screenshot base CoC di sini</h2>
+                <h2>Drop CoC base screenshot here</h2>
             </div>
             
             <!-- Scaling Container for Canvas -->
@@ -117,7 +133,11 @@
             </div>
             
             <!-- Floating Indicators & Controls -->
-            <div class="floating-controls">
+            <div class="floating-controls" id="floatingControls">
+                <div class="floater align-indicator" id="alignIndicator" style="display: none;">
+                    <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                    <span>Align Mode</span>
+                </div>
                 <div class="floater">
                     <span>Zoom:</span>
                     <strong class="zoom-indicator" id="zoomPercentage">100%</strong>
@@ -129,13 +149,13 @@
                 </div>
                 <div class="floater floater-tip">
                     <span>Tip:</span>
-                    <strong>Scroll mouse untuk Zoom</strong>
+                    <strong>Scroll mouse to Zoom</strong>
                 </div>
             </div>
             
             <!-- Popover Text Input -->
             <div class="text-popover" id="textPopover">
-                <input type="text" id="popoverInput" placeholder="Tulis catatan taktis..." />
+                <input type="text" id="popoverInput" placeholder="Write tactical note..." />
                 <button class="btn btn-primary" id="popoverSave" style="padding: 6px 12px;"><i class="fa-solid fa-check"></i></button>
                 <button class="btn" id="popoverCancel" style="padding: 6px 12px;"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -146,12 +166,12 @@
             <div class="sidebar-top-bar">
                 <div class="search-container">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="unitSearch" class="search-input" placeholder="Cari pasukan, hero, spell..." autocomplete="off" />
-                    <button class="search-clear-btn" id="clearSearchBtn" style="display: none;" title="Hapus Pencarian">
+                    <input type="text" id="unitSearch" class="search-input" placeholder="Search troops, heroes, spells..." autocomplete="off" />
+                    <button class="search-clear-btn" id="clearSearchBtn" style="display: none;" title="Clear Search">
                         <i class="fa-solid fa-circle-xmark"></i>
                     </button>
                 </div>
-                <button class="sidebar-action-btn mobile-sidebar-close" id="closeRightSidebarBtn" title="Tutup Panel">
+                <button class="sidebar-action-btn mobile-sidebar-close" id="closeRightSidebarBtn" title="Close Panel">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -168,32 +188,32 @@
     <div class="modal-overlay" id="helpModal" onclick="this.classList.remove('show')">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2>Panduan Singkat Attack Planner</h2>
+                <h2>Attack Planner Quick Guide</h2>
                 <button class="modal-close" onclick="document.getElementById('helpModal').classList.remove('show')">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <p><strong>1. Unggah Base Screenshot:</strong> Seret (drag & drop) gambar base CoC Anda ke kanvas tengah, atau gunakan tombol upload.</p>
-                <p><strong>2. Sesuaikan Grid Boundaries:</strong> Posisikan grid isometric agar sejajar dengan base. Geser base menggunakan drag mouse, dan perbesar/perkecil menggunakan scroll wheel mouse. Jika sudah sejajar, klik tombol <strong>"Lock Grid"</strong>.</p>
-                <p><strong>3. Buat Strategi:</strong> Gunakan menu kiri untuk memilih tool pena/panah taktis atau tambahkan catatan teks, lalu gunakan panel kanan untuk menaruh pasukan, spell, dan hero dengan urutan serang otomatis.</p>
+                <p><strong>1. Upload Base Screenshot:</strong> Drag & drop your CoC base image onto the center canvas, or use the upload button.</p>
+                <p><strong>2. Adjust Grid Boundaries:</strong> Align the isometric grid with the base. Drag the base using the mouse, and zoom in/out using the scroll wheel. Once aligned, click the <strong>"Lock Grid"</strong> button.</p>
+                <p><strong>3. Create Strategy:</strong> Use the left menu to select drawing tools or add text notes, then use the right panel to place troops, spells, and heroes with automatic attack ordering.</p>
                 
                 <div class="hotkey-list" style="margin-top: 16px;">
-                    <h3>Pintasan Keyboard (Hotkeys):</h3>
+                    <h3>Keyboard Shortcuts (Hotkeys):</h3>
                     <div class="hotkey-item">
-                        <span>Undo / Urungkan</span>
+                        <span>Undo</span>
                         <span class="hotkey-key">Ctrl + Z</span>
                     </div>
                     <div class="hotkey-item">
-                        <span>Redo / Ulangi</span>
+                        <span>Redo</span>
                         <span class="hotkey-key">Ctrl + Y</span>
                     </div>
                     <div class="hotkey-item">
-                        <span>Hapus Marker Terpilih</span>
+                        <span>Delete Selected Marker</span>
                         <span class="hotkey-key">Delete / Backspace</span>
                     </div>
                     <div class="hotkey-item">
-                        <span>Batal / Deselect Tool</span>
+                        <span>Cancel / Deselect Tool</span>
                         <span class="hotkey-key">Escape</span>
                     </div>
                 </div>

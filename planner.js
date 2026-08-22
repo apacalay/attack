@@ -62,7 +62,7 @@ const unitCategories = [
     {
         name: "Equipment",
         folder: "Hereos Equipment",
-        files: ["Barbarian_Puppet.png", "Archer_Puppet.png", "Healer_Puppet.png", "Hog_Rider_Puppet.png", "Giant_Arrow.png", "Giant_Gauntlet.png", "Earthquake_Boots.png", "Vampstache.png", "Rage_Vial.png", "Invisibility_Vial.png", "Haste_Vial.png", "Fireball.png", "Eternal_Tome.png", "Healing_Tome.png", "Life_Gem.png", "Rage_Gem.png", "Royal_Gem.png", "Seeking_Shield.png", "frozen_arrow.png", "magic_mirror.png", "Monolith_Arrow.webp", "rocket_spear.png", "rocket_backpacks.webp", "action_figure.png", "dark_crown.png", "dark_orb.png", "electro_boots.png", "electro_fangs.webp", "Revenge_Deck.webp", "fire_heart.png", "flame_blower.png", "frost_flake.png", "henchmen_puppet.png", "heroic_torch.png", "lavaloon_puppet.png", "metal_pants.png", "meteor_staff.png", "noble_iron.png", "snake_bracelet.png", "spiky_ball.png", "stick_horse.png", "stun_blaster.png"]
+        files: ["Barbarian_Puppet.png", "Archer_Puppet.png", "Healer_Puppet.png", "Hog_Rider_Puppet.png", "Giant_Arrow.png", "Giant_Gauntlet.png", "Earthquake_Boots.png", "Vampstache.png", "Rage_Vial.png", "Invisibility_Vial.png", "Haste_Vial.png", "Fireball.png", "Eternal_Tome.png", "Healing_Tome.png", "Life_Gem.png", "Rage_Gem.png", "Royal_Gem.png", "Seeking_Shield.png", "frozen_arrow.png", "magic_mirror.png", "Monolith_Arrow.webp", "rocket_spear.png", "rocket_backpacks.webp", "action_figure.png", "dark_crown.png", "dark_orb.png", "electro_boots.png", "electro_fangs.webp", "revenge_deck.webp", "fire_heart.png", "flame_blower.png", "frost_flake.png", "henchmen_puppet.png", "heroic_torch.png", "lavaloon_puppet.png", "metal_pants.png", "meteor_staff.png", "noble_iron.png", "snake_bracelet.png", "spiky_ball.png", "stick_horse.png", "stun_blaster.png"]
     },
     {
         name: "Siege Machines",
@@ -92,6 +92,7 @@ let bgImage = null;
 let bgX = 0;
 let bgY = 0;
 let bgScale = 1;
+let initialBgScale = 1.0;
 let isAlignMode = false;
 let isLocked = false;
 let showMarkerOverlay = false;
@@ -146,6 +147,9 @@ const markerImage = new Image();
 markerImage.src = "marker.webp"; // Loaded locally since it exists in the same folder
 
 const splashImage = new Image();
+splashImage.onload = () => {
+    if (canvas && ctx) draw();
+};
 splashImage.src = ASSETS_BASE_URL + "/attack_planner.webp";
 
 // Placement Counter for Deployment Order
@@ -157,6 +161,7 @@ window.addEventListener("DOMContentLoaded", () => {
     initUI();
     setupEventListeners();
     saveState(); // save initial empty state
+    draw(); // Render splash image immediately if already loaded
 });
 
 function initCanvas() {
@@ -171,16 +176,24 @@ function initCanvas() {
     window.addEventListener("resize", fitCanvasToWorkspace);
 }
 
+function updateZoomIndicator() {
+    const zoomText = document.getElementById("zoomPercentage");
+    if (!zoomText) return;
+    if (isAlignMode && bgImage) {
+        const percentage = Math.round((bgScale / initialBgScale) * 100);
+        zoomText.innerText = `${percentage}%`;
+    } else {
+        zoomText.innerText = `${Math.round(canvasUserZoom * 100)}%`;
+    }
+}
+
 function updateCanvasTransform() {
     const canvasContainer = document.querySelector(".canvas-container");
     if (!canvasContainer) return;
     const finalScale = canvasBaseScale * canvasUserZoom;
     canvasContainer.style.transform = `translate(${canvasPanX}px, ${canvasPanY}px) scale(${finalScale})`;
 
-    const zoomText = document.getElementById("zoomPercentage");
-    if (zoomText) {
-        zoomText.innerText = `${Math.round(canvasUserZoom * 100)}%`;
-    }
+    updateZoomIndicator();
 }
 
 // Adjust HTML Canvas responsive scale to fit the viewport workspace
@@ -409,6 +422,12 @@ function setupEventListeners() {
         fileInput.addEventListener("change", handleFileSelect);
     }
 
+    // Welcome card choose image button
+    const welcomeChooseBtn = document.getElementById("welcomeChooseBtn");
+    if (welcomeChooseBtn && fileInput) {
+        welcomeChooseBtn.addEventListener("click", () => fileInput.click());
+    }
+
     // Drag and drop base image
     const workspace = document.querySelector(".workspace");
     const dragOverlay = document.getElementById("dragOverlay");
@@ -460,36 +479,6 @@ function setupEventListeners() {
     if (redoBtn) redoBtn.addEventListener("click", redo);
     if (clearBtn) clearBtn.addEventListener("click", clearCanvas);
     if (downloadBtn) downloadBtn.addEventListener("click", downloadPlan);
-    // Alignment Banner Extra Buttons (+, -, Reset)
-    const alignZoomIn = document.getElementById("alignZoomIn");
-    const alignZoomOut = document.getElementById("alignZoomOut");
-    const alignReset = document.getElementById("alignReset");
-
-    if (alignZoomIn) {
-        alignZoomIn.addEventListener("click", () => {
-            if (!bgImage) return;
-            bgScale = Math.min(6, bgScale * 1.02);
-            draw();
-        });
-    }
-    if (alignZoomOut) {
-        alignZoomOut.addEventListener("click", () => {
-            if (!bgImage) return;
-            bgScale = Math.max(0.1, bgScale / 1.02);
-            draw();
-        });
-    }
-    if (alignReset) {
-        alignReset.addEventListener("click", () => {
-            if (!bgImage) return;
-            const scaleW = CANVAS_WIDTH / bgImage.width;
-            const scaleH = CANVAS_HEIGHT / bgImage.height;
-            bgScale = Math.min(scaleW, scaleH);
-            bgX = (CANVAS_WIDTH - bgImage.width * bgScale) / 2;
-            bgY = (CANVAS_HEIGHT - bgImage.height * bgScale) / 2;
-            draw();
-        });
-    }
 
     // Text popover handling
     const popover = document.getElementById("textPopover");
@@ -844,22 +833,44 @@ function setupEventListeners() {
 
     if (zoomInBtn) {
         zoomInBtn.addEventListener("click", () => {
-            canvasUserZoom = Math.min(3.5, canvasUserZoom * 1.2);
-            updateCanvasTransform();
+            if (isAlignMode && bgImage) {
+                bgScale = Math.min(6, bgScale * 1.05);
+                updateZoomIndicator();
+                draw();
+            } else {
+                canvasUserZoom = Math.min(3.5, canvasUserZoom * 1.2);
+                updateCanvasTransform();
+            }
         });
     }
     if (zoomOutBtn) {
         zoomOutBtn.addEventListener("click", () => {
-            canvasUserZoom = Math.max(0.5, canvasUserZoom / 1.2);
-            updateCanvasTransform();
+            if (isAlignMode && bgImage) {
+                bgScale = Math.max(0.1, bgScale / 1.05);
+                updateZoomIndicator();
+                draw();
+            } else {
+                canvasUserZoom = Math.max(0.5, canvasUserZoom / 1.2);
+                updateCanvasTransform();
+            }
         });
     }
     if (zoomResetBtn) {
         zoomResetBtn.addEventListener("click", () => {
-            canvasUserZoom = 1.0;
-            canvasPanX = 0;
-            canvasPanY = 0;
-            updateCanvasTransform();
+            if (isAlignMode && bgImage) {
+                const scaleW = CANVAS_WIDTH / bgImage.width;
+                const scaleH = CANVAS_HEIGHT / bgImage.height;
+                bgScale = Math.min(scaleW, scaleH);
+                bgX = (CANVAS_WIDTH - bgImage.width * bgScale) / 2;
+                bgY = (CANVAS_HEIGHT - bgImage.height * bgScale) / 2;
+                updateZoomIndicator();
+                draw();
+            } else {
+                canvasUserZoom = 1.0;
+                canvasPanX = 0;
+                canvasPanY = 0;
+                updateCanvasTransform();
+            }
         });
     }
 }
@@ -873,14 +884,17 @@ function setTool(tool) {
         isAlignMode = false;
         showMarkerOverlay = false;
         const alignBtn = document.getElementById("alignBtn");
-        const banner = document.getElementById("alignBanner");
+        const floatingControls = document.getElementById("floatingControls");
+        const alignIndicator = document.getElementById("alignIndicator");
         if (alignBtn) {
-            alignBtn.innerHTML = '<span class="btn-text">Align Grid</span>';
+            alignBtn.innerHTML = '<i class="fa-solid fa-unlock"></i> <span class="btn-text">Align Grid</span>';
             alignBtn.classList.remove("btn-primary");
             alignBtn.classList.add("btn-secondary");
         }
-        if (banner) banner.style.display = "none";
+        if (floatingControls) floatingControls.classList.remove("align-mode");
+        if (alignIndicator) alignIndicator.style.display = "none";
         updateBoundaryBtnUI();
+        updateZoomIndicator();
     }
 
     document.querySelectorAll(".left-sidebar .tool-btn").forEach(btn => {
@@ -914,10 +928,15 @@ function loadBaseImageFile(file) {
         img.onload = () => {
             bgImage = img;
 
+            // Hide welcome overlay if it exists
+            const welcomeOverlay = document.getElementById("welcomeOverlay");
+            if (welcomeOverlay) welcomeOverlay.style.display = "none";
+
             // Auto scale/center base image to fit canvas while preserving aspect ratio (contain-fit)
             const scaleW = CANVAS_WIDTH / img.width;
             const scaleH = CANVAS_HEIGHT / img.height;
             bgScale = Math.min(scaleW, scaleH);
+            initialBgScale = bgScale;
             bgX = (CANVAS_WIDTH - img.width * bgScale) / 2;
             bgY = (CANVAS_HEIGHT - img.height * bgScale) / 2;
 
@@ -928,14 +947,17 @@ function loadBaseImageFile(file) {
 
             const alignBtn = document.getElementById("alignBtn");
             if (alignBtn) {
-                alignBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span class="btn-text">Lock Grid & Start Drawing</span>';
+                alignBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span class="btn-text">Lock Grid</span>';
                 alignBtn.classList.remove("btn-secondary");
                 alignBtn.classList.add("btn-primary");
             }
 
-            const banner = document.getElementById("alignBanner");
-            if (banner) banner.style.display = "flex";
+            const floatingControls = document.getElementById("floatingControls");
+            const alignIndicator = document.getElementById("alignIndicator");
+            if (floatingControls) floatingControls.classList.add("align-mode");
+            if (alignIndicator) alignIndicator.style.display = "flex";
 
+            updateZoomIndicator();
             draw();
         };
         img.src = event.target.result;
@@ -948,40 +970,45 @@ function toggleAlignMode() {
 
     isAlignMode = !isAlignMode;
     const alignBtn = document.getElementById("alignBtn");
-    const banner = document.getElementById("alignBanner");
+    const floatingControls = document.getElementById("floatingControls");
+    const alignIndicator = document.getElementById("alignIndicator");
 
     if (isAlignMode) {
         if (alignBtn) {
-            alignBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span class="btn-text">Lock Grid & Start Drawing</span>';
+            alignBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span class="btn-text">Lock Grid</span>';
             alignBtn.classList.remove("btn-secondary");
             alignBtn.classList.add("btn-primary");
         }
-        if (banner) banner.style.display = "flex";
+        if (floatingControls) floatingControls.classList.add("align-mode");
+        if (alignIndicator) alignIndicator.style.display = "flex";
         showMarkerOverlay = true;
         updateBoundaryBtnUI();
         setTool(Tools.SELECT); // Force select tool for aligning
     } else {
         if (alignBtn) {
-            alignBtn.innerHTML = '<span class="btn-text">Align Grid</span>';
+            alignBtn.innerHTML = '<i class="fa-solid fa-unlock"></i> <span class="btn-text">Align Grid</span>';
             alignBtn.classList.remove("btn-primary");
             alignBtn.classList.add("btn-secondary");
         }
-        if (banner) banner.style.display = "none";
+        if (floatingControls) floatingControls.classList.remove("align-mode");
+        if (alignIndicator) alignIndicator.style.display = "none";
         showMarkerOverlay = false;
         updateBoundaryBtnUI();
     }
+    updateZoomIndicator();
     draw();
 }
 
 function updateBoundaryBtnUI() {
     const btn = document.getElementById("toggleBoundaryBtn");
     if (!btn) return;
+    btn.innerHTML = '<i class="fa-solid fa-border-all"></i>';
     if (showMarkerOverlay) {
-        btn.innerHTML = '<i class="fa-solid fa-border-all"></i> Hide Boundary';
+        btn.title = "Hide Red Boundary";
         btn.classList.remove("btn-secondary");
         btn.classList.add("btn-primary");
     } else {
-        btn.innerHTML = '<i class="fa-solid fa-border-all"></i> Show Boundary';
+        btn.title = "Show Red Boundary";
         btn.classList.remove("btn-primary");
         btn.classList.add("btn-secondary");
     }
@@ -1502,7 +1529,7 @@ function draw() {
             ctx.font = "bold 20px 'Outfit', sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText("Grid Alignment Mode: Geser & Zoom gambar base agar sejajar dengan batas merah", CANVAS_WIDTH / 2, 70);
+            ctx.fillText("Alignment Mode: Adjust the base image to fit the orange border.", CANVAS_WIDTH / 2, 70);
             ctx.restore();
         }
     }
@@ -2128,7 +2155,7 @@ function recalculateDeploymentOrder() {
 function clearCanvas() {
     if (elements.length === 0) return;
 
-    if (confirm("Hapus semua coretan taktis dan penempatan unit di canvas?")) {
+    if (confirm("Clear all tactical drawings and unit placements on the canvas?")) {
         elements = [];
         deploymentOrder = 1;
         selectedElement = null;
@@ -2140,7 +2167,7 @@ function clearCanvas() {
 // Export canvas image
 function downloadPlan() {
     if (!bgImage && elements.length === 0) {
-        alert("Harap unggah screenshot base CoC atau buat coretan terlebih dahulu sebelum mengunduh.");
+        alert("Please upload a CoC base screenshot or draw markers first before downloading.");
         return;
     }
 
@@ -2151,7 +2178,7 @@ function downloadPlan() {
     // Export PNG — all images are local (same-origin), no CORS taint
     canvas.toBlob(blob => {
         if (!blob) {
-            alert("Gagal membuat gambar. Coba lagi.");
+            alert("Failed to generate image. Please try again.");
             return;
         }
         const url = URL.createObjectURL(blob);

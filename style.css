@@ -883,6 +883,10 @@ canvas {
         display: none;
     }
     
+    .header-controls #uploadBtn .btn-text {
+        display: inline;
+    }
+    
     .mobile-only-btn {
         display: inline-flex;
     }
@@ -1014,4 +1018,176 @@ canvas {
     color: var(--text-primary);
     border-color: var(--accent-color);
     background-color: var(--bg-hover);
+}
+
+/* ==========================================================================
+   WELCOME SCREEN OVERLAY
+   ========================================================================== */
+
+.welcome-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 15;
+    pointer-events: auto;
+    width: 320px;
+    max-width: 90%;
+}
+
+.welcome-card {
+    text-align: center;
+    background-color: rgba(11, 15, 23, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.welcome-card h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fb923c; /* orange-400 */
+    margin-bottom: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.welcome-icon-box {
+    width: 48px;
+    height: 48px;
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    color: #9ca3af;
+}
+
+.welcome-icon-box svg {
+    width: 24px;
+    height: 24px;
+}
+
+.welcome-card p.main-text {
+    color: #e5e7eb;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.welcome-card p.sub-text {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    margin-bottom: 16px;
+}
+
+.welcome-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background-color: #f97316; /* orange-500 */
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.welcome-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.welcome-btn:hover {
+    background-color: #ea580c; /* orange-600 */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+}
+
+@media (min-width: 1024px) {
+    .welcome-overlay {
+        width: 440px;
+    }
+    
+    .welcome-card {
+        padding: 36px;
+    }
+    
+    .welcome-card h2 {
+        font-size: 1.75rem;
+        margin-bottom: 16px;
+    }
+    
+    .welcome-icon-box {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .welcome-icon-box svg {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .welcome-card p.main-text {
+        font-size: 1.05rem;
+        margin-bottom: 6px;
+    }
+    
+    .welcome-card p.sub-text {
+        font-size: 0.875rem;
+        margin-bottom: 24px;
+    }
+    
+    .welcome-btn {
+        font-size: 0.875rem;
+        padding: 10px 20px;
+        border-radius: 10px;
+    }
+    
+    .welcome-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* ==========================================================================
+   FLOATING ALIGN MODE CONTROLS
+   ========================================================================== */
+
+.align-indicator {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+    border-color: var(--accent-color) !important;
+    color: var(--accent-color) !important;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.align-indicator i {
+    animation: alignPulse 1.5s infinite alternate;
+}
+
+.floating-controls.align-mode .floater {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+@keyframes alignPulse {
+    0% { opacity: 0.4; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1.05); }
 }
