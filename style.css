@@ -604,15 +604,19 @@ header {
     position: relative;
     overflow: hidden;
     padding: 16px;
+    min-width: 0;
+    min-height: 0;
 }
 
 .canvas-container {
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center center;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     border-radius: 4px;
     overflow: hidden;
     background-color: #1a1a24;
-    transform-origin: center center;
     width: 1920px;
     height: 1080px;
     min-width: 1920px;
@@ -900,6 +904,19 @@ canvas {
     
     .mobile-only-btn {
         display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .mobile-only-btn.active {
+        background-color: var(--accent-color) !important;
+        border-color: var(--accent-color) !important;
+        color: #0b0f17 !important;
+        box-shadow: 0 0 12px var(--accent-shadow);
+    }
+    
+    .workspace {
+        padding: 8px;
     }
     
     /* Left Sidebar Compact */
@@ -956,24 +973,122 @@ canvas {
         font-size: 0.875rem;
     }
     
-    /* Right Sidebar Drawer */
+    /* Right Sidebar In-Flow Drawer on Mobile (Optimized Compact Dimensions) */
     .right-sidebar {
-        position: fixed;
-        right: 0;
-        top: 46px;
-        bottom: 0;
-        width: 270px;
+        position: relative;
+        top: 0;
+        right: auto;
+        bottom: auto;
+        width: 195px;
+        flex-shrink: 0;
+        height: 100%;
+        max-height: 100%;
+        margin-right: 0;
+        transform: translateX(0);
+        transition: margin-right 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+        z-index: 50;
+    }
+    
+    .right-sidebar:not(.open) {
+        margin-right: -195px;
         transform: translateX(100%);
-        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.7);
-        z-index: 200;
+        opacity: 0;
+        pointer-events: none;
     }
     
     .right-sidebar.open {
+        margin-right: 0;
         transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
     }
     
+    .sidebar-top-bar {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+
+    .sidebar-top-bar .search-container {
+        height: 30px;
+    }
+
+    .search-input {
+        height: 30px;
+        font-size: 0.72rem;
+        padding: 0 24px 0 26px;
+    }
+
+    .search-icon {
+        left: 8px;
+        font-size: 0.72rem;
+    }
+
+    .sidebar-action-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 0.75rem;
+    }
+
     .mobile-sidebar-close {
         display: flex;
+    }
+    
+    .accordion-categories {
+        padding: 6px 4px 60px 4px;
+        gap: 5px;
+    }
+
+    .accordion-header {
+        height: 32px;
+        padding: 0 8px;
+    }
+
+    .accordion-title-wrap {
+        gap: 6px;
+    }
+
+    .accordion-icon {
+        font-size: 0.75rem;
+        width: 14px;
+    }
+
+    .accordion-name {
+        font-size: 0.72rem;
+    }
+
+    .accordion-badge {
+        font-size: 0.6rem;
+        padding: 1px 5px;
+    }
+
+    .accordion-chevron {
+        font-size: 0.7rem;
+    }
+
+    .accordion-body {
+        padding: 6px 4px 8px 4px;
+    }
+
+    .accordion-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3px;
+    }
+
+    .unit-item {
+        gap: 2px;
+        padding: 2px 1px;
+    }
+
+    .unit-icon-wrapper {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+    }
+
+    .unit-name {
+        font-size: 0.52rem;
+        max-width: 40px;
     }
     
     /* Floating Controls Compact */

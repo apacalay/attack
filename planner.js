@@ -1,6 +1,8 @@
 const CANVAS_WIDTH = 1920;
 const CANVAS_HEIGHT = 1080;
-const ICON_SIZE = 36;
+const ICON_SIZE = 25; // Radius Troops & Heroes (diameter = 50px)
+const SPELL_ICON_SIZE = 18; // Radius Spells (diameter = 36px)
+const EQUIPMENT_ICON_SIZE = 25; // Radius Equipment (diameter = 50px)
 // Hasil ukur presisi diamond marker.webp (1297x976 px pada grid 44x44)
 const TILE_SCALE_X = 20.84; // 1 Tile Radius Horizontal = (1297 / 44) / sqrt(2) = 20.84 px
 const TILE_SCALE_Y = 15.68; // 1 Tile Radius Vertikal   = (976 / 44) / sqrt(2)  = 15.68 px
@@ -116,6 +118,7 @@ let dragStartY = 0;
 let arrowPreview = null;
 let brushPreview = null;
 let circlePreview = null;
+let giantArrowPreview = null;
 
 // Viewport zoom & pan state for planning mode
 let canvasBaseScale = 1.0;
@@ -175,6 +178,7 @@ function initCanvas() {
 
     fitCanvasToWorkspace();
     window.addEventListener("resize", fitCanvasToWorkspace);
+    window.addEventListener("load", fitCanvasToWorkspace);
 }
 
 function updateZoomIndicator() {
@@ -192,7 +196,7 @@ function updateCanvasTransform() {
     const canvasContainer = document.querySelector(".canvas-container");
     if (!canvasContainer) return;
     const finalScale = canvasBaseScale * canvasUserZoom;
-    canvasContainer.style.transform = `translate(${canvasPanX}px, ${canvasPanY}px) scale(${finalScale})`;
+    canvasContainer.style.transform = `translate(calc(-50% + ${canvasPanX}px), calc(-50% + ${canvasPanY}px)) scale(${finalScale})`;
 
     updateZoomIndicator();
 }
@@ -204,8 +208,10 @@ function fitCanvasToWorkspace() {
 
     if (!container || !canvasContainer) return;
 
-    const containerW = container.clientWidth - 32;
-    const containerH = container.clientHeight - 32;
+    const isMobile = window.innerWidth <= 980 || window.innerHeight <= 600;
+    const padding = isMobile ? 16 : 32;
+    const containerW = Math.max(100, container.clientWidth - padding);
+    const containerH = Math.max(100, container.clientHeight - padding);
 
     canvasBaseScale = Math.min(containerW / CANVAS_WIDTH, containerH / CANVAS_HEIGHT);
     updateCanvasTransform();
@@ -802,15 +808,36 @@ function setupEventListeners() {
     const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
     const closeRightSidebarBtn = document.getElementById("closeRightSidebarBtn");
 
+    function setMobileSidebarState(open) {
+        if (!rightSidebar) return;
+        if (open) {
+            rightSidebar.classList.add("open");
+            if (mobileSidebarToggle) mobileSidebarToggle.classList.add("active");
+        } else {
+            rightSidebar.classList.remove("open");
+            if (mobileSidebarToggle) mobileSidebarToggle.classList.remove("active");
+        }
+        fitCanvasToWorkspace();
+    }
+
     if (mobileSidebarToggle && rightSidebar) {
+        // Ensure active and open state on init
+        mobileSidebarToggle.classList.add("active");
+        rightSidebar.classList.add("open");
+
         mobileSidebarToggle.addEventListener("click", () => {
-            rightSidebar.classList.toggle("open");
+            const isOpen = rightSidebar.classList.contains("open");
+            setMobileSidebarState(!isOpen);
         });
     }
     if (closeRightSidebarBtn && rightSidebar) {
         closeRightSidebarBtn.addEventListener("click", () => {
-            rightSidebar.classList.remove("open");
+            setMobileSidebarState(false);
         });
+    }
+
+    if (rightSidebar) {
+        rightSidebar.addEventListener("transitionend", fitCanvasToWorkspace);
     }
 
     // Fullscreen Toggle
@@ -1067,8 +1094,8 @@ function handleMouseDown(e) {
         arrowDragEnd = null;
         isResizingTarget = false;
 
-        // 1. If an arrow is already selected, prioritize clicking on its start/end handle points
-        if (selectedElement && selectedElement.type === Tools.ARROW) {
+        // 1. If an arrow or giant arrow is already selected, prioritize clicking on its start/end handle points
+        if (selectedElement && (selectedElement.type === Tools.ARROW || selectedElement.type === "giant_arrow")) {
             const distStart = Math.hypot(coords.x - selectedElement.x1, coords.y - selectedElement.y1);
             const distEnd = Math.hypot(coords.x - selectedElement.x2, coords.y - selectedElement.y2);
             if (distStart < 26) {
@@ -1204,6 +1231,31 @@ function handleMouseDown(e) {
             popoverInput.focus();
         }, 50);
     } else if (currentTool === Tools.ICON && window.selectedUnit) {
+        const unitName = (window.selectedUnit.name || "").toLowerCase().trim();
+        const isGiantArrow = unitName.includes("giant arrow") || unitName.includes("giant_arrow");
+
+        if (isGiantArrow) {
+            isDrawing = true;
+            // Default aim towards base center (~350px)
+            const defaultDx = (CANVAS_WIDTH / 2 - coords.x);
+            const defaultDy = (CANVAS_HEIGHT / 2 - coords.y);
+            const angle = (defaultDx === 0 && defaultDy === 0) ? 0 : Math.atan2(defaultDy, defaultDx);
+            giantArrowPreview = {
+                id: Date.now() + Math.random(),
+                type: "giant_arrow",
+                x1: coords.x,
+                y1: coords.y,
+                x2: coords.x + Math.cos(angle) * 350,
+                y2: coords.y + Math.sin(angle) * 350,
+                src: window.selectedUnit.src,
+                name: window.selectedUnit.name,
+                folder: window.selectedUnit.folder,
+                orderNum: deploymentOrder
+            };
+            draw();
+            return;
+        }
+
         const newElement = {
             id: Date.now() + Math.random(),
             type: Tools.ICON,
@@ -1256,7 +1308,12 @@ function handleMouseMove(e) {
         return;
     }
 
-    if (isDrawing && currentTool === Tools.BRUSH && brushPreview) {
+    if (isDrawing && giantArrowPreview) {
+        giantArrowPreview.x2 = coords.x;
+        giantArrowPreview.y2 = coords.y;
+        draw();
+        return;
+    } else if (isDrawing && currentTool === Tools.BRUSH && brushPreview) {
         brushPreview.push({ x: coords.x, y: coords.y });
         draw();
     } else if (isDrawing && currentTool === Tools.ARROW && arrowPreview) {
@@ -1285,7 +1342,7 @@ function handleMouseMove(e) {
             return;
         }
 
-        if (selectedElement.type === Tools.ARROW) {
+        if (selectedElement.type === Tools.ARROW || selectedElement.type === "giant_arrow") {
             if (arrowDragEnd === "x1") {
                 selectedElement.x1 = coords.x;
                 selectedElement.y1 = coords.y;
@@ -1293,7 +1350,7 @@ function handleMouseMove(e) {
                 selectedElement.x2 = coords.x;
                 selectedElement.y2 = coords.y;
             } else {
-                // Move entire arrow
+                // Move entire arrow / giant arrow
                 const dx = selectedElement.x2 - selectedElement.x1;
                 const dy = selectedElement.y2 - selectedElement.y1;
                 selectedElement.x1 = coords.x - dragOffset.x;
@@ -1326,6 +1383,27 @@ function handleMouseUp() {
     if (isPanningCanvas) {
         isPanningCanvas = false;
         document.body.style.cursor = isSpacePressed ? "grab" : "default";
+    }
+
+    if (isDrawing && giantArrowPreview) {
+        const dist = Math.hypot(giantArrowPreview.x2 - giantArrowPreview.x1, giantArrowPreview.y2 - giantArrowPreview.y1);
+        if (dist < 15) {
+            const defaultDx = (CANVAS_WIDTH / 2 - giantArrowPreview.x1);
+            const defaultDy = (CANVAS_HEIGHT / 2 - giantArrowPreview.y1);
+            const angle = (defaultDx === 0 && defaultDy === 0) ? 0 : Math.atan2(defaultDy, defaultDx);
+            giantArrowPreview.x2 = giantArrowPreview.x1 + Math.cos(angle) * 350;
+            giantArrowPreview.y2 = giantArrowPreview.y1 + Math.sin(angle) * 350;
+        }
+        elements.push(giantArrowPreview);
+        deploymentOrder++;
+        saveState();
+
+        setTool(Tools.SELECT);
+        selectedElement = giantArrowPreview;
+        isDraggingElement = false;
+        giantArrowPreview = null;
+        isDrawing = false;
+        draw();
     }
 
     if (isDrawing && currentTool === Tools.BRUSH && brushPreview) {
@@ -1409,14 +1487,36 @@ function isClickOnElement(coords, el) {
 
     if (el.type === Tools.ICON) {
         const folder = (el.folder || el.src || "").toLowerCase();
+        const unitKey = (el.name || "").toLowerCase().trim();
         const isSpell = folder.includes("spell");
         const isEquipment = folder.includes("equipment");
-        let radius = ICON_SIZE; // 36px
+        let radius = ICON_SIZE;
         if (isSpell) {
-            radius = ICON_SIZE / 2; // 18px
+            radius = SPELL_ICON_SIZE;
         } else if (isEquipment) {
-            radius = 30; // 30px (diameter 60px)
+            radius = EQUIPMENT_ICON_SIZE;
         }
+
+        // For backward-offset directional equipment (Rocket Backpacks & Flame Blower)
+        if (unitKey.includes("rocket backpack") || unitKey.includes("rocket_backpack") ||
+            unitKey.includes("flame blower") || unitKey.includes("flame_blower")) {
+            const angle = Math.atan2(CANVAS_HEIGHT / 2 - el.y, CANVAS_WIDTH / 2 - el.x);
+            const iconX = el.x - Math.cos(angle) * 50;
+            const iconY = el.y - Math.sin(angle) * 50;
+            if (Math.hypot(coords.x - iconX, coords.y - iconY) < (radius + 6)) return true;
+            if (Math.hypot(coords.x - el.x, coords.y - el.y) < 22) return true;
+            return false;
+        }
+
+        // For Fireball top-right offset
+        if (unitKey.includes("fireball") || unitKey.includes("fire_ball")) {
+            const iconX = el.x + 50;
+            const iconY = el.y - 50;
+            if (Math.hypot(coords.x - iconX, coords.y - iconY) < (radius + 6)) return true;
+            if (Math.hypot(coords.x - el.x, coords.y - el.y) < 22) return true;
+            return false;
+        }
+
         return Math.hypot(coords.x - el.x, coords.y - el.y) < (radius + 6);
     }
 
@@ -1452,6 +1552,23 @@ function isClickOnElement(coords, el) {
         const h = el.fontSize + 12;
         return coords.x >= el.x - 12 && coords.x <= el.x + textWidth + 12 &&
             coords.y >= el.y - 12 && coords.y <= el.y + h + 12;
+    }
+
+    if (el.type === "giant_arrow") {
+        const angle = Math.atan2(el.y2 - el.y1, el.x2 - el.x1);
+        const iconX = el.x1 - Math.cos(angle) * 50;
+        const iconY = el.y1 - Math.sin(angle) * 50;
+        if (Math.hypot(coords.x - iconX, coords.y - iconY) < 36) return true;
+        if (Math.hypot(coords.x - el.x1, coords.y - el.y1) < 26) return true;
+        if (Math.hypot(coords.x - el.x2, coords.y - el.y2) < 26) return true;
+
+        const dist = Math.hypot(el.x2 - el.x1, el.y2 - el.y1);
+        const dx = coords.x - el.x1;
+        const dy = coords.y - el.y1;
+        const localX = dx * Math.cos(-angle) - dy * Math.sin(-angle);
+        const localY = dx * Math.sin(-angle) + dy * Math.cos(-angle);
+        const halfWidth = TILE_SCALE_X + 10;
+        return localX >= 0 && localX <= dist && Math.abs(localY) <= halfWidth;
     }
 
     if (el.type === Tools.ARROW) {
@@ -1551,6 +1668,9 @@ function draw() {
             case Tools.ARROW:
                 drawArrow(el.x1, el.y1, el.x2, el.y2, el.color, el.width, isSelected);
                 break;
+            case "giant_arrow":
+                drawGiantArrow(el, isSelected);
+                break;
             case Tools.CIRCLE:
                 drawCircle(el.x, el.y, el.color, el.radius, isSelected);
                 break;
@@ -1573,6 +1693,9 @@ function draw() {
     if (arrowPreview) {
         drawArrow(arrowPreview.x1, arrowPreview.y1, arrowPreview.x2, arrowPreview.y2, currentColor, currentWidth, false);
     }
+    if (giantArrowPreview) {
+        drawGiantArrow(giantArrowPreview, false);
+    }
     if (circlePreview) {
         drawCircle(circlePreview.x, circlePreview.y, currentColor, circlePreview.radius, false);
     }
@@ -1594,90 +1717,59 @@ function hexToRgba(hex, alpha) {
 
 function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
     ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     const angle = Math.atan2(y2 - y1, x2 - x1);
     const dist = Math.hypot(x2 - x1, y2 - y1);
-
-    // 2 grid tiles total shaft width (1 tile = 20.84px on each side -> halfWidth = 20.84px, total width = 41.68px)
-    const halfWidth = TILE_SCALE_X; // 1 tile each side = 2 tiles total width (~41.7px)
-
-    // Arrowhead dimensions (wider than shaft for distinct tactical head)
-    const headWidth = halfWidth * 2.5; // ~52px wide
-    const headLength = Math.min(halfWidth * 2.2, Math.max(30, dist * 0.45));
-    const shaftLength = Math.max(0, dist - headLength * 0.65);
+    const strokeW = width || 6;
+    const headLength = Math.max(22, Math.min(48, strokeW * 3.8));
+    const headWidth = headLength * 0.72;
+    const shaftEndDist = Math.max(0, dist - headLength * 0.65);
 
     ctx.translate(x1, y1);
     ctx.rotate(angle);
 
-    // 1. Shaded Corridor (2-Grid wide transparent fill matching chosen color)
-    const rgba0 = hexToRgba(color, 0.05);
-    const rgbaSoft = hexToRgba(color, 0.22);
-    const rgbaCore = hexToRgba(color, 0.45);
-    const rgbaSolid = hexToRgba(color, 0.95);
-
-    const grad = ctx.createLinearGradient(0, -halfWidth, 0, halfWidth);
-    grad.addColorStop(0, rgba0);
-    grad.addColorStop(0.2, rgbaSoft);
-    grad.addColorStop(0.5, rgbaCore);
-    grad.addColorStop(0.8, rgbaSoft);
-    grad.addColorStop(1, rgba0);
-
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, -halfWidth, shaftLength, halfWidth * 2);
-
-    // 2. Dashed Outer Border Lines of the 2-Grid Corridor
-    ctx.strokeStyle = rgbaSolid;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8, 6]);
-    ctx.beginPath();
-    ctx.moveTo(0, -halfWidth);
-    ctx.lineTo(shaftLength, -halfWidth);
-    ctx.moveTo(0, halfWidth);
-    ctx.lineTo(shaftLength, halfWidth);
-    ctx.stroke();
-
-    // 3. Centerline Trajectory (dashed white line along center)
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([10, 6]);
+    // 1. High-contrast outer stroke (white outline for clear visibility on dark base)
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = strokeW + 4;
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(shaftLength, 0);
+    ctx.lineTo(shaftEndDist, 0);
     ctx.stroke();
 
-    // 4. Direction flow indicator chevrons along the corridor
-    ctx.setLineDash([]);
-    ctx.fillStyle = hexToRgba(color, 0.65);
-    for (let d = 40; d < shaftLength - 25; d += 65) {
-        ctx.beginPath();
-        ctx.moveTo(d + 10, 0);
-        ctx.lineTo(d - 6, -halfWidth * 0.55);
-        ctx.lineTo(d - 1, 0);
-        ctx.lineTo(d - 6, halfWidth * 0.55);
-        ctx.closePath();
-        ctx.fill();
-    }
+    // 2. Colored inner shaft line
+    ctx.strokeStyle = color;
+    ctx.lineWidth = strokeW;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(shaftEndDist, 0);
+    ctx.stroke();
 
-    // 5. Arrowhead at the tip (dist, 0)
+    // 3. Arrowhead at the tip (dist, 0)
     const tipX = dist;
-    const baseCutX = dist - headLength;
+    const baseLeftX = dist - headLength;
     const baseCenterX = dist - headLength * 0.65;
 
     ctx.beginPath();
     ctx.moveTo(tipX, 0);
-    ctx.lineTo(baseCutX, -headWidth / 2);
+    ctx.lineTo(baseLeftX, -headWidth);
     ctx.lineTo(baseCenterX, 0);
-    ctx.lineTo(baseCutX, headWidth / 2);
+    ctx.lineTo(baseLeftX, headWidth);
     ctx.closePath();
-    ctx.fillStyle = rgbaSolid;
-    ctx.fill();
+
+    // Arrowhead white outer border
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Arrowhead solid color fill
+    ctx.fillStyle = color;
+    ctx.fill();
 
     ctx.restore();
 
-    // 6. Highlight selection with interactive handles to edit endpoints
+    // 4. Highlight selection with interactive grab handles
     if (isSelected) {
         ctx.save();
         ctx.strokeStyle = "rgba(0, 255, 255, 0.6)";
@@ -1689,20 +1781,20 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
 
         // Handle Point 1: Start Point (x1, y1)
         ctx.beginPath();
-        ctx.arc(x1, y1, 10, 0, Math.PI * 2);
+        ctx.arc(x1, y1, 8, 0, Math.PI * 2);
         ctx.fillStyle = "#00ffff";
         ctx.fill();
         ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
         // Handle Point 2: End Tip (x2, y2)
         ctx.beginPath();
-        ctx.arc(x2, y2, 10, 0, Math.PI * 2);
+        ctx.arc(x2, y2, 8, 0, Math.PI * 2);
         ctx.fillStyle = "#ff0055";
         ctx.fill();
         ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
         ctx.restore();
@@ -2007,6 +2099,271 @@ function drawRocketBackpackBeam(startX, startY) {
     ctx.restore();
 }
 
+function drawFlameBlowerCone(startX, startY) {
+    const centerX = CANVAS_WIDTH / 2;
+    const centerY = CANVAS_HEIGHT / 2;
+
+    // Angle pointing from drop point towards center of base (like rocket backpack)
+    const angle = Math.atan2(centerY - startY, centerX - startX);
+
+    // Shape: Triangle with base 11 tiles (~229.24px) and height 14 tiles (~291.76px)
+    const baseWidth = 11 * TILE_SCALE_X; // ~229.24px
+    const halfBase = baseWidth / 2; // ~114.62px
+    const height = 14 * TILE_SCALE_X; // ~291.76px
+
+    ctx.save();
+    ctx.translate(startX, startY);
+    ctx.rotate(angle);
+
+    // 1. Fiery gradient fill from apex (0, 0) to base (height, 0)
+    const grad = ctx.createLinearGradient(0, 0, height, 0);
+    grad.addColorStop(0, "rgba(249, 115, 22, 0.45)"); // Bright fiery orange at apex
+    grad.addColorStop(0.5, "rgba(239, 68, 68, 0.25)"); // Vibrant flame red in middle
+    grad.addColorStop(0.9, "rgba(220, 38, 38, 0.12)"); // Fading red near base
+    grad.addColorStop(1, "rgba(220, 38, 38, 0.04)");
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0); // Apex (tip) at drop point
+    ctx.lineTo(height, -halfBase); // Top corner of base
+    ctx.lineTo(height, halfBase);  // Bottom corner of base
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // 2. Dashed Outer Border Lines of the Triangle
+    ctx.strokeStyle = "rgba(249, 115, 22, 0.9)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 5]);
+    ctx.stroke();
+
+    // 3. Centerline Trajectory towards center
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(height, 0);
+    ctx.stroke();
+
+    // 4. Tactical range / flame wave arcs (at 1/3 and 2/3 height)
+    ctx.strokeStyle = "rgba(249, 115, 22, 0.45)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+
+    for (let step = 1; step <= 2; step++) {
+        const stepH = (height * step) / 3;
+        const stepHalfW = (halfBase * step) / 3;
+        ctx.beginPath();
+        ctx.moveTo(stepH, -stepHalfW);
+        ctx.lineTo(stepH, stepHalfW);
+        ctx.stroke();
+    }
+
+    // 5. Direction flow indicator chevrons spreading outward
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(249, 115, 22, 0.8)";
+    for (let d = 55; d < height - 25; d += 65) {
+        const spanW = (halfBase * d) / height * 0.45;
+        ctx.beginPath();
+        ctx.moveTo(d + 10, 0);
+        ctx.lineTo(d - 6, -spanW);
+        ctx.lineTo(d - 1, 0);
+        ctx.lineTo(d - 6, spanW);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+function drawGiantArrow(el, isSelected) {
+    const x1 = el.x1;
+    const y1 = el.y1;
+    const x2 = el.x2;
+    const y2 = el.y2;
+
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const dist = Math.hypot(x2 - x1, y2 - y1);
+
+    // 2 grid tiles total shaft width (1 tile = 20.84px on each side -> halfWidth = 20.84px, total width = 41.68px)
+    const halfWidth = TILE_SCALE_X; // 20.84px
+    const headWidth = halfWidth * 2.5; // ~52px wide
+    const headLength = Math.min(halfWidth * 2.2, Math.max(30, dist * 0.45));
+    const shaftLength = Math.max(0, dist - headLength * 0.65);
+
+    ctx.save();
+    ctx.translate(x1, y1);
+    ctx.rotate(angle);
+
+    // 1. Shaded Corridor (2-Grid wide transparent magical cyan energy fill)
+    const grad = ctx.createLinearGradient(0, -halfWidth, 0, halfWidth);
+    grad.addColorStop(0, "rgba(6, 182, 212, 0.0)");
+    grad.addColorStop(0.2, "rgba(6, 182, 212, 0.18)");
+    grad.addColorStop(0.5, "rgba(56, 189, 248, 0.38)");
+    grad.addColorStop(0.8, "rgba(6, 182, 212, 0.18)");
+    grad.addColorStop(1, "rgba(6, 182, 212, 0.0)");
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, -halfWidth, shaftLength, halfWidth * 2);
+
+    // 2. Dashed Outer Border Lines of the 2-Grid Corridor
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.9)";
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.moveTo(0, -halfWidth);
+    ctx.lineTo(shaftLength, -halfWidth);
+    ctx.moveTo(0, halfWidth);
+    ctx.lineTo(shaftLength, halfWidth);
+    ctx.stroke();
+
+    // 3. Centerline Trajectory (dashed white line along center)
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 6]);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(shaftLength, 0);
+    ctx.stroke();
+
+    // 4. Direction flow indicator chevrons along the corridor
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(6, 182, 212, 0.9)";
+    for (let d = 40; d < shaftLength - 25; d += 65) {
+        ctx.beginPath();
+        ctx.moveTo(d + 10, 0);
+        ctx.lineTo(d - 6, -halfWidth * 0.55);
+        ctx.lineTo(d - 1, 0);
+        ctx.lineTo(d - 6, halfWidth * 0.55);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // 5. Arrowhead at the tip (dist, 0) -> exactly at (x2, y2)
+    const tipX = dist;
+    const baseCutX = dist - headLength;
+    const baseCenterX = dist - headLength * 0.65;
+
+    ctx.beginPath();
+    ctx.moveTo(tipX, 0);
+    ctx.lineTo(baseCutX, -headWidth / 2);
+    ctx.lineTo(baseCenterX, 0);
+    ctx.lineTo(baseCutX, headWidth / 2);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(6, 182, 212, 0.95)";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.restore();
+
+    // 6. Backward Offset for Queen / Giant Arrow Icon (placed behind drop point x1, y1)
+    const offsetDist = 50;
+    const iconX = x1 - Math.cos(angle) * offsetDist;
+    const iconY = y1 - Math.sin(angle) * offsetDist;
+
+    // Leader dashed connector line from icon to drop point (x1, y1)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(iconX, iconY);
+    ctx.lineTo(x1, y1);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.restore();
+
+    // 7. Clean Drop Pin Indicator at (x1, y1)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x1, y1, 6, 0, Math.PI * 2);
+    ctx.fillStyle = "#00ffff";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(x1, y1, 2.2, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.restore();
+
+    // 8. Render Archer Queen / Giant Arrow Icon at (iconX, iconY)
+    let img = imageCache.get(el.src);
+    if (!img) {
+        img = new Image();
+        img.onload = () => draw();
+        img.src = el.src;
+        imageCache.set(el.src, img);
+    }
+
+    const currentRadius = EQUIPMENT_ICON_SIZE;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(iconX, iconY, currentRadius, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+
+    if (img && img.complete && img.naturalWidth > 0) {
+        ctx.drawImage(img, iconX - currentRadius, iconY - currentRadius, currentRadius * 2, currentRadius * 2);
+    } else {
+        ctx.fillStyle = "#222d42";
+        ctx.fillRect(iconX - currentRadius, iconY - currentRadius, currentRadius * 2, currentRadius * 2);
+    }
+    ctx.restore();
+
+    // Icon white stroke border outline
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(iconX, iconY, currentRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = isSelected ? "#00ffff" : "#ffffff";
+    ctx.lineWidth = isSelected ? 3 : 2;
+    ctx.stroke();
+
+    // Deployment Order badge on icon
+    const badgeR = 11;
+    const badgeX = iconX + currentRadius - 4;
+    const badgeY = iconY + currentRadius - 4;
+
+    ctx.beginPath();
+    ctx.arc(badgeX, badgeY, badgeR, 0, Math.PI * 2);
+    ctx.fillStyle = "#f97316";
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${el.orderNum > 9 ? badgeR * 0.85 : badgeR * 1.15}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(el.orderNum), badgeX, badgeY);
+
+    // 9. Selection handles (Cyan at drop origin x1, y1; Magenta at aim tip x2, y2)
+    if (isSelected) {
+        // Start Point Handle (x1, y1) - Drop Origin
+        ctx.beginPath();
+        ctx.arc(x1, y1, 9, 0, Math.PI * 2);
+        ctx.fillStyle = "#00ffff";
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // End Aim Point Handle (x2, y2) - Aim Direction Tip
+        ctx.beginPath();
+        ctx.arc(x2, y2, 9, 0, Math.PI * 2);
+        ctx.fillStyle = "#ff0055";
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
 function drawUnitIcon(el, isSelected) {
     let img = imageCache.get(el.src);
 
@@ -2023,23 +2380,116 @@ function drawUnitIcon(el, isSelected) {
         };
     }
 
-    // Spells = 18px (diameter 36), Equipment = 30px (diameter 60), Troops/Heroes = 36px (diameter 72)
     const folder = (el.folder || el.src || "").toLowerCase();
     const isSpell = folder.includes("spell");
     const isEquipment = folder.includes("equipment");
-    let currentRadius = ICON_SIZE; // 36px
+    let currentRadius = ICON_SIZE;
     if (isSpell) {
-        currentRadius = ICON_SIZE / 2; // 18px
+        currentRadius = SPELL_ICON_SIZE;
     } else if (isEquipment) {
-        currentRadius = 30; // 30px (enlarged diameter 60px)
+        currentRadius = EQUIPMENT_ICON_SIZE;
     }
 
     const unitKey = (el.name || "").toLowerCase().trim();
     const spellConfig = SPELL_RADII[unitKey];
 
-    // Draw Rocket Backpacks linear trajectory projection (passes through center from edge to edge, 4 grid width)
-    if (unitKey.includes("rocket backpack") || unitKey.includes("rocket_backpack")) {
-        drawRocketBackpackBeam(el.x, el.y);
+    const isDirectionalEquipment = unitKey.includes("rocket backpack") || unitKey.includes("rocket_backpack") ||
+        unitKey.includes("flame blower") || unitKey.includes("flame_blower");
+
+    let renderX = el.x;
+    let renderY = el.y;
+
+    if (isDirectionalEquipment) {
+        const angle = Math.atan2(CANVAS_HEIGHT / 2 - el.y, CANVAS_WIDTH / 2 - el.x);
+        const offsetDist = 50;
+        renderX = el.x - Math.cos(angle) * offsetDist;
+        renderY = el.y - Math.sin(angle) * offsetDist;
+
+        // Draw the trajectory beam or flame cone starting cleanly at drop point (el.x, el.y)
+        if (unitKey.includes("rocket backpack") || unitKey.includes("rocket_backpack")) {
+            drawRocketBackpackBeam(el.x, el.y);
+        } else if (unitKey.includes("flame blower") || unitKey.includes("flame_blower")) {
+            drawFlameBlowerCone(el.x, el.y);
+        }
+
+        // Draw leader dashed line from icon to drop point (el.x, el.y)
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(renderX, renderY);
+        ctx.lineTo(el.x, el.y);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+
+        // Draw clean drop pin at (el.x, el.y)
+        ctx.beginPath();
+        ctx.arc(el.x, el.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#f97316";
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(el.x, el.y, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.restore();
+    } else if (unitKey.includes("fireball") || unitKey.includes("fire_ball")) {
+        // Offset Fireball icon to top-right (50px distance)
+        renderX = el.x + 50;
+        renderY = el.y - 50;
+
+        const radiusX = (spellConfig ? spellConfig.radiusTiles : 6) * TILE_SCALE_X;
+        const radiusY = (spellConfig ? spellConfig.radiusTiles : 6) * TILE_SCALE_Y;
+
+        ctx.save();
+        // 1. Draw AoE Ground Ellipse (6 tiles)
+        ctx.beginPath();
+        ctx.ellipse(el.x, el.y, radiusX, radiusY, 0, 0, Math.PI * 2);
+        ctx.fillStyle = spellConfig ? spellConfig.color : "rgba(249, 115, 22, 0.22)";
+        ctx.fill();
+        ctx.strokeStyle = spellConfig ? spellConfig.stroke : "rgba(249, 115, 22, 0.9)";
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 2. Draw leader dashed connector from icon to target impact center (el.x, el.y)
+        ctx.beginPath();
+        ctx.moveTo(renderX, renderY);
+        ctx.lineTo(el.x, el.y);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+
+        // 3. Draw Center Target Crosshair & Bullseye Pin at impact point (el.x, el.y)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(el.x - 12, el.y);
+        ctx.lineTo(el.x + 12, el.y);
+        ctx.moveTo(el.x, el.y - 12);
+        ctx.lineTo(el.x, el.y + 12);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(el.x, el.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#f97316";
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(el.x, el.y, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+
+        ctx.restore();
     } else if (spellConfig) {
         const radiusX = spellConfig.radiusTiles * TILE_SCALE_X;
         const radiusY = spellConfig.radiusTiles * TILE_SCALE_Y;
@@ -2058,18 +2508,18 @@ function drawUnitIcon(el, isSelected) {
         ctx.restore();
     }
 
-    // Clip circle for icon image
+    // Clip circle for icon image at renderX, renderY
     ctx.save();
     ctx.beginPath();
-    ctx.arc(el.x, el.y, currentRadius, 0, Math.PI * 2);
+    ctx.arc(renderX, renderY, currentRadius, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
 
     if (img && img.complete && img.naturalWidth > 0) {
-        ctx.drawImage(img, el.x - currentRadius, el.y - currentRadius, currentRadius * 2, currentRadius * 2);
+        ctx.drawImage(img, renderX - currentRadius, renderY - currentRadius, currentRadius * 2, currentRadius * 2);
     } else {
         ctx.fillStyle = "#222d42";
-        ctx.fillRect(el.x - currentRadius, el.y - currentRadius, currentRadius * 2, currentRadius * 2);
+        ctx.fillRect(renderX - currentRadius, renderY - currentRadius, currentRadius * 2, currentRadius * 2);
     }
 
     ctx.restore();
@@ -2077,15 +2527,15 @@ function drawUnitIcon(el, isSelected) {
     // Render icon white stroke border outline
     ctx.save();
     ctx.beginPath();
-    ctx.arc(el.x, el.y, currentRadius, 0, Math.PI * 2);
+    ctx.arc(renderX, renderY, currentRadius, 0, Math.PI * 2);
     ctx.strokeStyle = isSelected ? "#00ffff" : "#ffffff";
     ctx.lineWidth = isSelected ? 3 : 2;
     ctx.stroke();
 
-    // Render Deployment Order badge on bottom-right corner
+    // Render Deployment Order badge on bottom-right corner of the icon
     const badgeR = isSpell ? 8 : (isEquipment ? 11 : 12);
-    const badgeX = el.x + currentRadius - (isSpell ? 2 : 4);
-    const badgeY = el.y + currentRadius - (isSpell ? 2 : 4);
+    const badgeX = renderX + currentRadius - (isSpell ? 2 : 4);
+    const badgeY = renderY + currentRadius - (isSpell ? 2 : 4);
 
     ctx.beginPath();
     ctx.arc(badgeX, badgeY, badgeR, 0, Math.PI * 2);
@@ -2205,10 +2655,10 @@ function setupRotationAndFullscreen() {
 
     function requestAppFullscreen() {
         const docEl = document.documentElement;
-        const requestFS = docEl.requestFullscreen || 
-                          docEl.webkitRequestFullscreen || 
-                          docEl.mozRequestFullScreen || 
-                          docEl.msRequestFullscreen;
+        const requestFS = docEl.requestFullscreen ||
+            docEl.webkitRequestFullscreen ||
+            docEl.mozRequestFullScreen ||
+            docEl.msRequestFullscreen;
 
         if (requestFS) {
             requestFS.call(docEl)
@@ -2248,20 +2698,20 @@ function setupRotationAndFullscreen() {
 
         const isMobile = window.matchMedia("(max-width: 980px)").matches;
         const isLandscape = window.matchMedia("(orientation: landscape)").matches;
-        const isFullscreen = !!(document.fullscreenElement || 
-                                document.webkitFullscreenElement || 
-                                document.mozFullScreenElement || 
-                                document.msFullscreenElement);
+        const isFullscreen = !!(document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement);
         const isDismissed = sessionStorage.getItem("fullscreen_toast_dismissed") === "true";
         const isImageLoaded = bgImage !== null;
 
         if (isMobile && isLandscape && isImageLoaded && !isFullscreen && !isDismissed) {
             // Slight delay to ensure layout settles after rotation
             setTimeout(() => {
-                const currentFS = !!(document.fullscreenElement || 
-                                     document.webkitFullscreenElement || 
-                                     document.mozFullScreenElement || 
-                                     document.msFullscreenElement);
+                const currentFS = !!(document.fullscreenElement ||
+                    document.webkitFullscreenElement ||
+                    document.mozFullScreenElement ||
+                    document.msFullscreenElement);
                 const currentImageLoaded = bgImage !== null;
                 if (!currentFS && currentImageLoaded && sessionStorage.getItem("fullscreen_toast_dismissed") !== "true") {
                     fullscreenToast.classList.add("show");
@@ -2282,10 +2732,10 @@ function setupRotationAndFullscreen() {
     const fsEvents = ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"];
     fsEvents.forEach(evt => {
         document.addEventListener(evt, () => {
-            const isFullscreen = !!(document.fullscreenElement || 
-                                    document.webkitFullscreenElement || 
-                                    document.mozFullScreenElement || 
-                                    document.msFullscreenElement);
+            const isFullscreen = !!(document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement);
             const btn = document.getElementById("fullscreenBtn");
             if (btn) {
                 if (isFullscreen) {

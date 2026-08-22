@@ -63,8 +63,9 @@
             <button class="btn btn-icon" id="fullscreenBtn" title="Fullscreen Mode">
                 <i class="fa-solid fa-expand"></i>
             </button>
-            <button class="btn btn-icon mobile-only-btn" id="mobileSidebarToggle" title="Open/Close Troops Panel">
-                <i class="fa-solid fa-users"></i>
+            <button class="btn btn-icon mobile-only-btn active" id="mobileSidebarToggle"
+                title="Open/Close Troops Panel">
+                <i class="fa-solid fa-crosshairs"></i>
             </button>
         </div>
     </header>
@@ -81,11 +82,11 @@
                 <button class="tool-btn" data-tool="brush" data-tooltip="Free Draw / Brush">
                     <i class="fa-solid fa-paintbrush"></i>
                 </button>
-                <button class="tool-btn" data-tool="arrow" data-tooltip="Attack Arrow (2 Grid)">
+                <button class="tool-btn" data-tool="arrow" data-tooltip="Attack Arrow">
                     <i class="fa-solid fa-arrow-right-long"></i>
                 </button>
                 <button class="tool-btn" data-tool="circle" data-tooltip="Area Circle / Radius">
-                    <i class="fa-solid fa-circle-dot"></i>
+                    <i class="fa-regular fa-circle-dot"></i>
                 </button>
                 <button class="tool-btn" data-tool="xmark" data-tooltip="Plus Target (+)">
                     <i class="fa-solid fa-plus"></i>
@@ -192,7 +193,7 @@
         </main>
 
         <!-- Right Sidebar: CoC Units Unified Collapsible Accordion -->
-        <aside class="sidebar right-sidebar" id="rightSidebar">
+        <aside class="sidebar right-sidebar open" id="rightSidebar">
             <div class="sidebar-top-bar">
                 <div class="search-container">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
