@@ -65,7 +65,7 @@ const unitCategories = [
         name: "Equipment",
         folder: "Hereos Equipment",
         files: ["Giant_Arrow.png", "Fireball.png", "rocket_backpacks.webp", "flame_blower.png", "Giant_Gauntlet.png", "snake_bracelet.png", "spiky_ball.png", "stick_horse.png", "Barbarian_Puppet.png", "Earthquake_Boots.png", "Vampstache.png", "Rage_Vial.png", "frozen_arrow.png", "magic_mirror.png", "action_figure.png", "Monolith_Arrow.webp", "Archer_Puppet.png", "Invisibility_Vial.png", "Healer_Puppet.png", "dark_crown.png", "meteor_staff.png", "henchmen_puppet.png", "dark_orb.png", "metal_pants.png", "noble_iron.png", "lavaloon_puppet.png", "heroic_torch.png", "Eternal_Tome.png", "Healing_Tome.png", "Life_Gem.png", "Rage_Gem.png", "rocket_spear.png", "electro_boots.png", "frost_flake.png", "Hog_Rider_Puppet.png", "Haste_Vial.png", "Royal_Gem.png", "Seeking_Shield.png", "fire_heart.png", "Revenge_Deck.webp", "stun_blaster.png", "electro_fangs.webp"]
-//        files: ["Barbarian_Puppet.png", "Archer_Puppet.png", "Healer_Puppet.png", "Hog_Rider_Puppet.png", "Giant_Arrow.png", "Giant_Gauntlet.png", "Earthquake_Boots.png", "Vampstache.png", "Rage_Vial.png", "Invisibility_Vial.png", "Haste_Vial.png", "Fireball.png", "Eternal_Tome.png", "Healing_Tome.png", "Life_Gem.png", "Rage_Gem.png", "Royal_Gem.png", "Seeking_Shield.png", "frozen_arrow.png", "magic_mirror.png", "Monolith_Arrow.webp", "rocket_spear.png", "rocket_backpacks.webp", "action_figure.png", "dark_crown.png", "dark_orb.png", "electro_boots.png", "electro_fangs.webp", "revenge_deck.webp", "fire_heart.png", "flame_blower.png", "frost_flake.png", "henchmen_puppet.png", "heroic_torch.png", "lavaloon_puppet.png", "metal_pants.png", "meteor_staff.png", "noble_iron.png", "snake_bracelet.png", "spiky_ball.png", "stick_horse.png", "stun_blaster.png"]
+        //        files: ["Barbarian_Puppet.png", "Archer_Puppet.png", "Healer_Puppet.png", "Hog_Rider_Puppet.png", "Giant_Arrow.png", "Giant_Gauntlet.png", "Earthquake_Boots.png", "Vampstache.png", "Rage_Vial.png", "Invisibility_Vial.png", "Haste_Vial.png", "Fireball.png", "Eternal_Tome.png", "Healing_Tome.png", "Life_Gem.png", "Rage_Gem.png", "Royal_Gem.png", "Seeking_Shield.png", "frozen_arrow.png", "magic_mirror.png", "Monolith_Arrow.webp", "rocket_spear.png", "rocket_backpacks.webp", "action_figure.png", "dark_crown.png", "dark_orb.png", "electro_boots.png", "electro_fangs.webp", "revenge_deck.webp", "fire_heart.png", "flame_blower.png", "frost_flake.png", "henchmen_puppet.png", "heroic_torch.png", "lavaloon_puppet.png", "metal_pants.png", "meteor_staff.png", "noble_iron.png", "snake_bracelet.png", "spiky_ball.png", "stick_horse.png", "stun_blaster.png"]
     },
     {
         name: "Siege Machines",
@@ -2104,72 +2104,97 @@ function drawFlameBlowerCone(startX, startY) {
     const centerX = CANVAS_WIDTH / 2;
     const centerY = CANVAS_HEIGHT / 2;
 
-    // Angle pointing from drop point towards center of base (like rocket backpack)
-    const angle = Math.atan2(centerY - startY, centerX - startX);
+    // Ground vector from drop point to base center (accounting for dimetric/isometric ratio)
+    const dx = centerX - startX;
+    const dy = centerY - startY;
+    const uDir = dx / TILE_SCALE_X;
+    const vDir = dy / TILE_SCALE_Y;
+    const groundAngle = Math.atan2(vDir, uDir);
 
-    // Shape: Triangle with base 11 tiles (~229.24px) and height 14 tiles (~291.76px)
-    const baseWidth = 11 * TILE_SCALE_X; // ~229.24px
-    const halfBase = baseWidth / 2; // ~114.62px
-    const height = 14 * TILE_SCALE_X; // ~291.76px
+    // Dimensions in tiles on ground plane: height along centerline = 14 tiles, base width = 11 tiles
+    const rangeTiles = 14;
+    const halfBaseTiles = 5.5;
+
+    // Project a point on ground plane (forward along centerline, perp across centerline) to screen pixels
+    const getGroundScreenPos = (forwardTiles, perpTiles) => {
+        const gx = forwardTiles * Math.cos(groundAngle) - perpTiles * Math.sin(groundAngle);
+        const gy = forwardTiles * Math.sin(groundAngle) + perpTiles * Math.cos(groundAngle);
+        return {
+            x: startX + gx * TILE_SCALE_X,
+            y: startY + gy * TILE_SCALE_Y
+        };
+    };
+
+    const baseCenter = getGroundScreenPos(rangeTiles, 0);
+    const baseLeft = getGroundScreenPos(rangeTiles, -halfBaseTiles);
+    const baseRight = getGroundScreenPos(rangeTiles, halfBaseTiles);
 
     ctx.save();
-    ctx.translate(startX, startY);
-    ctx.rotate(angle);
 
-    // 1. Fiery gradient fill from apex (0, 0) to base (height, 0)
-    const grad = ctx.createLinearGradient(0, 0, height, 0);
+    // 1. Fiery gradient fill from apex (startX, startY) to flat outer base (baseCenter.x, baseCenter.y)
+    const grad = ctx.createLinearGradient(startX, startY, baseCenter.x, baseCenter.y);
     grad.addColorStop(0, "rgba(249, 115, 22, 0.45)"); // Bright fiery orange at apex
-    grad.addColorStop(0.5, "rgba(239, 68, 68, 0.25)"); // Vibrant flame red in middle
-    grad.addColorStop(0.9, "rgba(220, 38, 38, 0.12)"); // Fading red near base
-    grad.addColorStop(1, "rgba(220, 38, 38, 0.04)");
+    grad.addColorStop(0.4, "rgba(239, 68, 68, 0.28)"); // Vibrant flame red in middle
+    grad.addColorStop(0.85, "rgba(220, 38, 38, 0.12)"); // Fading red near base
+    grad.addColorStop(1, "rgba(220, 38, 38, 0.02)");
 
+    // 2. Isometric triangle path (Apex -> Left Corner -> Right Corner -> Close to Apex)
     ctx.beginPath();
-    ctx.moveTo(0, 0); // Apex (tip) at drop point
-    ctx.lineTo(height, -halfBase); // Top corner of base
-    ctx.lineTo(height, halfBase);  // Bottom corner of base
+    ctx.moveTo(startX, startY); // Apex at drop point
+    ctx.lineTo(baseLeft.x, baseLeft.y); // Left base corner
+    ctx.lineTo(baseRight.x, baseRight.y); // Flat straight base to right corner
     ctx.closePath();
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // 2. Dashed Outer Border Lines of the Triangle
+    // 3. Dashed outer border lines of the isometric triangle
     ctx.strokeStyle = "rgba(249, 115, 22, 0.9)";
     ctx.lineWidth = 2;
     ctx.setLineDash([8, 5]);
     ctx.stroke();
 
-    // 3. Centerline Trajectory towards center
+    // 4. Centerline Trajectory towards center (exact 14 tiles)
     ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
     ctx.lineWidth = 1.5;
     ctx.setLineDash([6, 6]);
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(height, 0);
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(baseCenter.x, baseCenter.y);
     ctx.stroke();
 
-    // 4. Tactical range / flame wave arcs (at 1/3 and 2/3 height)
+    // 5. Tactical range / flame wave straight lines across the cone (at 1/3 and 2/3 range)
     ctx.strokeStyle = "rgba(249, 115, 22, 0.45)";
     ctx.lineWidth = 1.5;
     ctx.setLineDash([4, 4]);
 
     for (let step = 1; step <= 2; step++) {
-        const stepH = (height * step) / 3;
-        const stepHalfW = (halfBase * step) / 3;
+        const stepDist = (rangeTiles * step) / 3;
+        const stepHalfW = (halfBaseTiles * step) / 3;
+        const pLeft = getGroundScreenPos(stepDist, -stepHalfW);
+        const pRight = getGroundScreenPos(stepDist, stepHalfW);
+
         ctx.beginPath();
-        ctx.moveTo(stepH, -stepHalfW);
-        ctx.lineTo(stepH, stepHalfW);
+        ctx.moveTo(pLeft.x, pLeft.y);
+        ctx.lineTo(pRight.x, pRight.y);
         ctx.stroke();
     }
 
-    // 5. Direction flow indicator chevrons spreading outward
+    // 6. Direction flow indicator chevrons spreading outward in isometric projection
     ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(249, 115, 22, 0.8)";
-    for (let d = 55; d < height - 25; d += 65) {
-        const spanW = (halfBase * d) / height * 0.45;
+    ctx.fillStyle = "rgba(249, 115, 22, 0.85)";
+    for (let d = 3.5; d < rangeTiles - 1; d += 3.2) {
+        const spanW = (d / rangeTiles) * halfBaseTiles * 0.45;
+
+        const tip = getGroundScreenPos(d + 0.55, 0);
+        const leftWing = getGroundScreenPos(d - 0.35, -spanW);
+        const centerNotch = getGroundScreenPos(d - 0.08, 0);
+        const rightWing = getGroundScreenPos(d - 0.35, spanW);
+
         ctx.beginPath();
-        ctx.moveTo(d + 10, 0);
-        ctx.lineTo(d - 6, -spanW);
-        ctx.lineTo(d - 1, 0);
-        ctx.lineTo(d - 6, spanW);
+        ctx.moveTo(tip.x, tip.y);
+        ctx.lineTo(leftWing.x, leftWing.y);
+        ctx.lineTo(centerNotch.x, centerNotch.y);
+        ctx.lineTo(rightWing.x, rightWing.y);
         ctx.closePath();
         ctx.fill();
     }
@@ -2753,4 +2778,3 @@ function setupRotationAndFullscreen() {
     // Run on initial load
     checkFullscreenToast();
 }
-
