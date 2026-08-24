@@ -103,7 +103,7 @@ let showMarkerOverlay = false;
 // Drawing state
 let currentTool = Tools.SELECT;
 let currentColor = "#3b82f6"; // default royal blue
-let currentWidth = 5;
+let currentWidth = 2; // default thin/medium stroke (4px)
 let currentTextSize = 32;
 
 let elements = [];
@@ -404,6 +404,15 @@ function filterAllCategories(query) {
     });
 }
 
+function updateThicknessUI(width) {
+    if (!width) return;
+    const thicknessBtns = document.querySelectorAll(".thickness-btn");
+    thicknessBtns.forEach(b => {
+        const btnW = parseFloat(b.dataset.width);
+        b.classList.toggle("active", Math.abs(btnW - width) < 0.5);
+    });
+}
+
 function setupEventListeners() {
     // Toolbar buttons
     document.querySelectorAll(".left-sidebar .tool-btn").forEach(btn => {
@@ -419,6 +428,22 @@ function setupEventListeners() {
             document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("active"));
             swatch.classList.add("active");
             currentColor = swatch.dataset.color;
+        });
+    });
+
+    // Stroke Thickness Selector
+    const thicknessBtns = document.querySelectorAll(".thickness-btn");
+    thicknessBtns.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            currentWidth = parseFloat(btn.dataset.width) || 4;
+            updateThicknessUI(currentWidth);
+
+            if (selectedElement && (selectedElement.type === Tools.BRUSH || selectedElement.type === Tools.ARROW)) {
+                selectedElement.width = currentWidth;
+                saveState();
+                draw();
+            }
         });
     });
 
@@ -906,6 +931,7 @@ function setupEventListeners() {
 
 // Set active drawing tool
 function setTool(tool) {
+    const isSameTool = (currentTool === tool);
     currentTool = tool;
 
     // If user picks a drawing/action tool, exit align mode so drawing works immediately
@@ -932,6 +958,20 @@ function setTool(tool) {
             btn.classList.add("active");
         }
     });
+
+    // Toggle popovers for tools with options
+    document.querySelectorAll(".tool-popover").forEach(p => p.classList.remove("active"));
+    if (tool === Tools.BRUSH) {
+        const popover = document.getElementById("brushPopover");
+        if (popover) {
+            popover.classList.add("active");
+        }
+    } else if (tool === Tools.ARROW) {
+        const popover = document.getElementById("arrowPopover");
+        if (popover) {
+            popover.classList.add("active");
+        }
+    }
 
     if (tool !== Tools.ICON) {
         document.querySelectorAll(".unit-item").forEach(u => u.classList.remove("active"));
@@ -1154,6 +1194,9 @@ function handleMouseDown(e) {
 
         selectedElement = clickedElement;
         if (selectedElement) {
+            if (selectedElement.width) {
+                updateThicknessUI(selectedElement.width);
+            }
             isDraggingElement = true;
             if (!arrowDragEnd && !isResizingTarget) {
                 // Brush uses points[0] instead of .x/.x1
@@ -1723,17 +1766,17 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
 
     const angle = Math.atan2(y2 - y1, x2 - x1);
     const dist = Math.hypot(x2 - x1, y2 - y1);
-    const strokeW = width || 6;
-    const headLength = Math.max(22, Math.min(48, strokeW * 3.8));
+    const strokeW = width || 4;
+    const headLength = Math.max(20, Math.min(44, strokeW * 3.8));
     const headWidth = headLength * 0.72;
     const shaftEndDist = Math.max(0, dist - headLength * 0.65);
 
     ctx.translate(x1, y1);
     ctx.rotate(angle);
 
-    // 1. High-contrast outer stroke (white outline for clear visibility on dark base)
+    // 1. High-contrast outer stroke (subtle +2px white outline)
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = strokeW + 4;
+    ctx.lineWidth = strokeW + 2;
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(shaftEndDist, 0);
@@ -1808,11 +1851,11 @@ function drawBrush(points, color, width, isSelected) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    const strokeW = width || 8;
+    const strokeW = width || 4;
 
-    // 1. White outer border outline
+    // 1. White outer border outline (subtle +2px outline)
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = strokeW + 4;
+    ctx.lineWidth = strokeW + 2;
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
@@ -1860,17 +1903,9 @@ function drawCircle(x, y, color, radius, isSelected) {
     ctx.fillStyle = hexToRgba(color, 0.2);
     ctx.fill();
 
-    // 2. White outer border outline
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 3.5;
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // 3. Colored inner dashed tactical spell stroke
+    // 2. Tactical dashed AoE border line (clean transparent gaps)
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.8;
     ctx.setLineDash([6, 6]);
     ctx.beginPath();
     ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
@@ -2040,59 +2075,88 @@ function drawRocketBackpackBeam(startX, startY) {
     const centerX = CANVAS_WIDTH / 2;
     const centerY = CANVAS_HEIGHT / 2;
 
-    // Angle pointing from drop point towards center of base
-    const angle = Math.atan2(centerY - startY, centerX - startX);
-    const distToCenter = Math.hypot(centerX - startX, centerY - startY);
-    const beamLength = Math.max(2600, distToCenter * 2.5);
+    // Ground vector from drop point to base center (accounting for dimetric/isometric ratio)
+    const dx = centerX - startX;
+    const dy = centerY - startY;
+    const uDir = dx / TILE_SCALE_X;
+    const vDir = dy / TILE_SCALE_Y;
+    const groundAngle = Math.atan2(vDir, uDir);
 
-    // 4 tiles total width (2 tiles left + 2 tiles right from center line)
-    // 2 tiles in canvas px = 2 * TILE_SCALE_X = 2 * 20.84 = 41.68px (total width ~83.36px)
-    const halfWidth = 2 * TILE_SCALE_X;
+    // Rocket Backpack corridor in ground tiles: total beam length = 120 tiles, half width = 2 tiles (4 tiles total width)
+    const rangeTiles = 120;
+    const halfWidthTiles = 2.0;
+
+    // Project a point on ground plane (forward along centerline, perp across centerline) to screen pixels
+    const getGroundScreenPos = (forwardTiles, perpTiles) => {
+        const gx = forwardTiles * Math.cos(groundAngle) - perpTiles * Math.sin(groundAngle);
+        const gy = forwardTiles * Math.sin(groundAngle) + perpTiles * Math.cos(groundAngle);
+        return {
+            x: startX + gx * TILE_SCALE_X,
+            y: startY + gy * TILE_SCALE_Y
+        };
+    };
+
+    const p0Left = getGroundScreenPos(0, -halfWidthTiles);
+    const p0Right = getGroundScreenPos(0, halfWidthTiles);
+    const pEndLeft = getGroundScreenPos(rangeTiles, -halfWidthTiles);
+    const pEndRight = getGroundScreenPos(rangeTiles, halfWidthTiles);
+    const pEndCenter = getGroundScreenPos(rangeTiles, 0);
 
     ctx.save();
-    ctx.translate(startX, startY);
-    ctx.rotate(angle);
 
-    // 1. Transparent Tactical Red Laser Beam Corridor
-    const grad = ctx.createLinearGradient(0, -halfWidth, 0, halfWidth);
-    grad.addColorStop(0, "rgba(239, 68, 68, 0.0)");
-    grad.addColorStop(0.2, "rgba(239, 68, 68, 0.12)");
-    grad.addColorStop(0.5, "rgba(239, 68, 68, 0.26)");
-    grad.addColorStop(0.8, "rgba(239, 68, 68, 0.12)");
-    grad.addColorStop(1, "rgba(239, 68, 68, 0.0)");
+    // 1. Transparent Tactical Red Laser Beam Corridor (Isometric ground gradient)
+    const pMidLeft = getGroundScreenPos(rangeTiles * 0.4, -halfWidthTiles);
+    const pMidRight = getGroundScreenPos(rangeTiles * 0.4, halfWidthTiles);
+    const grad = ctx.createLinearGradient(pMidLeft.x, pMidLeft.y, pMidRight.x, pMidRight.y);
+    grad.addColorStop(0, "rgba(239, 68, 68, 0.12)");
+    grad.addColorStop(0.25, "rgba(239, 68, 68, 0.22)");
+    grad.addColorStop(0.5, "rgba(239, 68, 68, 0.35)");
+    grad.addColorStop(0.75, "rgba(239, 68, 68, 0.22)");
+    grad.addColorStop(1, "rgba(239, 68, 68, 0.12)");
 
+    ctx.beginPath();
+    ctx.moveTo(p0Left.x, p0Left.y);
+    ctx.lineTo(pEndLeft.x, pEndLeft.y);
+    ctx.lineTo(pEndRight.x, pEndRight.y);
+    ctx.lineTo(p0Right.x, p0Right.y);
+    ctx.closePath();
     ctx.fillStyle = grad;
-    ctx.fillRect(0, -halfWidth, beamLength, halfWidth * 2);
+    ctx.fill();
 
     // 2. Outer Beam Corridor Edges (dashed red border lines)
-    ctx.strokeStyle = "rgba(239, 68, 68, 0.75)";
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(239, 68, 68, 0.9)";
+    ctx.lineWidth = 1.8;
     ctx.setLineDash([8, 6]);
     ctx.beginPath();
-    ctx.moveTo(0, -halfWidth);
-    ctx.lineTo(beamLength, -halfWidth);
-    ctx.moveTo(0, halfWidth);
-    ctx.lineTo(beamLength, halfWidth);
+    ctx.moveTo(p0Left.x, p0Left.y);
+    ctx.lineTo(pEndLeft.x, pEndLeft.y);
+    ctx.moveTo(p0Right.x, p0Right.y);
+    ctx.lineTo(pEndRight.x, pEndRight.y);
     ctx.stroke();
 
     // 3. Center Trajectory Line (dashed white line along center)
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
     ctx.lineWidth = 2;
     ctx.setLineDash([12, 6]);
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(beamLength, 0);
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(pEndCenter.x, pEndCenter.y);
     ctx.stroke();
 
     // 4. Flight direction arrows along the trajectory
     ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(239, 68, 68, 0.85)";
-    for (let d = 250; d < beamLength; d += 350) {
+    ctx.fillStyle = "rgba(239, 68, 68, 0.9)";
+    for (let d = 10; d < rangeTiles - 5; d += 15) {
+        const tip = getGroundScreenPos(d + 1.2, 0);
+        const leftWing = getGroundScreenPos(d - 0.8, -0.75);
+        const notch = getGroundScreenPos(d - 0.3, 0);
+        const rightWing = getGroundScreenPos(d - 0.8, 0.75);
+
         ctx.beginPath();
-        ctx.moveTo(d, 0);
-        ctx.lineTo(d - 18, -10);
-        ctx.lineTo(d - 12, 0);
-        ctx.lineTo(d - 18, 10);
+        ctx.moveTo(tip.x, tip.y);
+        ctx.lineTo(leftWing.x, leftWing.y);
+        ctx.lineTo(notch.x, notch.y);
+        ctx.lineTo(rightWing.x, rightWing.y);
         ctx.closePath();
         ctx.fill();
     }
@@ -2208,83 +2272,121 @@ function drawGiantArrow(el, isSelected) {
     const x2 = el.x2;
     const y2 = el.y2;
 
-    const angle = Math.atan2(y2 - y1, x2 - x1);
-    const dist = Math.hypot(x2 - x1, y2 - y1);
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const uDir = dx / TILE_SCALE_X;
+    const vDir = dy / TILE_SCALE_Y;
+    const groundAngle = Math.atan2(vDir, uDir);
+    const distTiles = Math.hypot(uDir, vDir);
 
-    // 2 grid tiles total shaft width (1 tile = 20.84px on each side -> halfWidth = 20.84px, total width = 41.68px)
-    const halfWidth = TILE_SCALE_X; // 20.84px
-    const headWidth = halfWidth * 2.5; // ~52px wide
-    const headLength = Math.min(halfWidth * 2.2, Math.max(30, dist * 0.45));
-    const shaftLength = Math.max(0, dist - headLength * 0.65);
+    if (distTiles < 0.1) return;
+
+    // Shaft parameters in isometric ground tiles (1 tile left + 1 tile right = 2 tiles total shaft width)
+    const halfWidthTiles = 1.0;
+    const headLengthTiles = Math.min(3.0, Math.max(1.5, distTiles * 0.35));
+    const shaftLengthTiles = Math.max(0, distTiles - headLengthTiles * 0.65);
+
+    const getGroundScreenPos = (forwardTiles, perpTiles) => {
+        const gx = forwardTiles * Math.cos(groundAngle) - perpTiles * Math.sin(groundAngle);
+        const gy = forwardTiles * Math.sin(groundAngle) + perpTiles * Math.cos(groundAngle);
+        return {
+            x: x1 + gx * TILE_SCALE_X,
+            y: y1 + gy * TILE_SCALE_Y
+        };
+    };
+
+    const p0Left = getGroundScreenPos(0, -halfWidthTiles);
+    const p0Right = getGroundScreenPos(0, halfWidthTiles);
+    const pShaftLeft = getGroundScreenPos(shaftLengthTiles, -halfWidthTiles);
+    const pShaftRight = getGroundScreenPos(shaftLengthTiles, halfWidthTiles);
+    const pShaftCenter = getGroundScreenPos(shaftLengthTiles, 0);
 
     ctx.save();
-    ctx.translate(x1, y1);
-    ctx.rotate(angle);
 
     // 1. Shaded Corridor (2-Grid wide transparent magical cyan energy fill)
-    const grad = ctx.createLinearGradient(0, -halfWidth, 0, halfWidth);
-    grad.addColorStop(0, "rgba(6, 182, 212, 0.0)");
-    grad.addColorStop(0.2, "rgba(6, 182, 212, 0.18)");
-    grad.addColorStop(0.5, "rgba(56, 189, 248, 0.38)");
-    grad.addColorStop(0.8, "rgba(6, 182, 212, 0.18)");
-    grad.addColorStop(1, "rgba(6, 182, 212, 0.0)");
+    const pMidLeft = getGroundScreenPos(shaftLengthTiles / 2, -halfWidthTiles);
+    const pMidRight = getGroundScreenPos(shaftLengthTiles / 2, halfWidthTiles);
+    const grad = ctx.createLinearGradient(pMidLeft.x, pMidLeft.y, pMidRight.x, pMidRight.y);
+    grad.addColorStop(0, "rgba(6, 182, 212, 0.12)");
+    grad.addColorStop(0.25, "rgba(6, 182, 212, 0.25)");
+    grad.addColorStop(0.5, "rgba(56, 189, 248, 0.42)");
+    grad.addColorStop(0.75, "rgba(6, 182, 212, 0.25)");
+    grad.addColorStop(1, "rgba(6, 182, 212, 0.12)");
 
+    ctx.beginPath();
+    ctx.moveTo(p0Left.x, p0Left.y);
+    ctx.lineTo(pShaftLeft.x, pShaftLeft.y);
+    ctx.lineTo(pShaftRight.x, pShaftRight.y);
+    ctx.lineTo(p0Right.x, p0Right.y);
+    ctx.closePath();
     ctx.fillStyle = grad;
-    ctx.fillRect(0, -halfWidth, shaftLength, halfWidth * 2);
+    ctx.fill();
 
     // 2. Dashed Outer Border Lines of the 2-Grid Corridor
-    ctx.strokeStyle = "rgba(56, 189, 248, 0.9)";
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.95)";
     ctx.lineWidth = 1.8;
     ctx.setLineDash([8, 6]);
     ctx.beginPath();
-    ctx.moveTo(0, -halfWidth);
-    ctx.lineTo(shaftLength, -halfWidth);
-    ctx.moveTo(0, halfWidth);
-    ctx.lineTo(shaftLength, halfWidth);
+    ctx.moveTo(p0Left.x, p0Left.y);
+    ctx.lineTo(pShaftLeft.x, pShaftLeft.y);
+    ctx.moveTo(p0Right.x, p0Right.y);
+    ctx.lineTo(pShaftRight.x, pShaftRight.y);
     ctx.stroke();
 
-    // 3. Centerline Trajectory (dashed white line along center)
+    // 3. Centerline Trajectory
     ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
     ctx.lineWidth = 2;
     ctx.setLineDash([10, 6]);
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(shaftLength, 0);
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(pShaftCenter.x, pShaftCenter.y);
     ctx.stroke();
 
-    // 4. Direction flow indicator chevrons along the corridor
+    // 4. Direction flow indicator chevrons
     ctx.setLineDash([]);
     ctx.fillStyle = "rgba(6, 182, 212, 0.9)";
-    for (let d = 40; d < shaftLength - 25; d += 65) {
+    for (let d = 2.0; d < shaftLengthTiles - 0.5; d += 3.0) {
+        const tip = getGroundScreenPos(d + 0.6, 0);
+        const leftWing = getGroundScreenPos(d - 0.3, -halfWidthTiles * 0.55);
+        const notch = getGroundScreenPos(d - 0.05, 0);
+        const rightWing = getGroundScreenPos(d - 0.3, halfWidthTiles * 0.55);
+
         ctx.beginPath();
-        ctx.moveTo(d + 10, 0);
-        ctx.lineTo(d - 6, -halfWidth * 0.55);
-        ctx.lineTo(d - 1, 0);
-        ctx.lineTo(d - 6, halfWidth * 0.55);
+        ctx.moveTo(tip.x, tip.y);
+        ctx.lineTo(leftWing.x, leftWing.y);
+        ctx.lineTo(notch.x, notch.y);
+        ctx.lineTo(rightWing.x, rightWing.y);
         ctx.closePath();
         ctx.fill();
     }
 
-    // 5. Arrowhead at the tip (dist, 0) -> exactly at (x2, y2)
-    const tipX = dist;
-    const baseCutX = dist - headLength;
-    const baseCenterX = dist - headLength * 0.65;
+    // 5. Arrowhead at the tip (x2, y2)
+    const pTip = { x: x2, y: y2 };
+    const headWidthTiles = halfWidthTiles * 2.5; // ~2.5 tiles wide tip
+    const pHeadBaseLeft = getGroundScreenPos(distTiles - headLengthTiles, -headWidthTiles / 2);
+    const pHeadBaseRight = getGroundScreenPos(distTiles - headLengthTiles, headWidthTiles / 2);
+    const pHeadNotch = getGroundScreenPos(distTiles - headLengthTiles * 0.65, 0);
+
+    const headGrad = ctx.createLinearGradient(pHeadNotch.x, pHeadNotch.y, pTip.x, pTip.y);
+    headGrad.addColorStop(0, "rgba(56, 189, 248, 0.5)");
+    headGrad.addColorStop(1, "rgba(6, 182, 212, 0.9)");
 
     ctx.beginPath();
-    ctx.moveTo(tipX, 0);
-    ctx.lineTo(baseCutX, -headWidth / 2);
-    ctx.lineTo(baseCenterX, 0);
-    ctx.lineTo(baseCutX, headWidth / 2);
+    ctx.moveTo(pTip.x, pTip.y);
+    ctx.lineTo(pHeadBaseLeft.x, pHeadBaseLeft.y);
+    ctx.lineTo(pHeadNotch.x, pHeadNotch.y);
+    ctx.lineTo(pHeadBaseRight.x, pHeadBaseRight.y);
     ctx.closePath();
-    ctx.fillStyle = "rgba(6, 182, 212, 0.95)";
+    ctx.fillStyle = headGrad;
     ctx.fill();
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.lineWidth = 2;
     ctx.stroke();
 
     ctx.restore();
 
     // 6. Backward Offset for Queen / Giant Arrow Icon (placed behind drop point x1, y1)
+    const angle = Math.atan2(dy, dx);
     const offsetDist = 50;
     const iconX = x1 - Math.cos(angle) * offsetDist;
     const iconY = y1 - Math.sin(angle) * offsetDist;

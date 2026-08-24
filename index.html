@@ -90,12 +90,55 @@
                 <button class="tool-btn active" data-tool="select" data-tooltip="Select & Move (Esc)">
                     <i class="fa-solid fa-arrow-pointer"></i>
                 </button>
-                <button class="tool-btn" data-tool="brush" data-tooltip="Free Draw / Brush">
-                    <i class="fa-solid fa-paintbrush-fine"></i>
-                </button>
-                <button class="tool-btn" data-tool="arrow" data-tooltip="Attack Arrow">
-                    <i class="fa-solid fa-arrow-right-long"></i>
-                </button>
+
+                <!-- Brush Tool with Popover -->
+                <div class="tool-wrapper">
+                    <button class="tool-btn" data-tool="brush" data-tooltip="Free Draw / Brush">
+                        <i class="fa-solid fa-paintbrush-fine"></i>
+                    </button>
+                    <div class="tool-popover" id="brushPopover">
+                        <div class="popover-header">Brush Size</div>
+                        <div class="thickness-palette">
+                            <button class="thickness-btn" data-width="1" data-tooltip="Thin (2px)">
+                                <span class="dot" style="width: 4px; height: 4px;"></span>
+                            </button>
+                            <button class="thickness-btn active" data-width="2" data-tooltip="Medium (2px)">
+                                <span class="dot" style="width: 7px; height: 7px;"></span>
+                            </button>
+                            <button class="thickness-btn" data-width="3" data-tooltip="Thick (3px)">
+                                <span class="dot" style="width: 10px; height: 10px;"></span>
+                            </button>
+                            <button class="thickness-btn" data-width="4" data-tooltip="Extra Thick (4px)">
+                                <span class="dot" style="width: 14px; height: 14px;"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attack Arrow Tool with Popover -->
+                <div class="tool-wrapper">
+                    <button class="tool-btn" data-tool="arrow" data-tooltip="Attack Arrow">
+                        <i class="fa-solid fa-arrow-right-long"></i>
+                    </button>
+                    <div class="tool-popover" id="arrowPopover">
+                        <div class="popover-header">Arrow Size</div>
+                        <div class="thickness-palette">
+                            <button class="thickness-btn" data-width="2" data-tooltip="Thin (2px)">
+                                <span class="dot" style="width: 4px; height: 4px;"></span>
+                            </button>
+                            <button class="thickness-btn active" data-width="4" data-tooltip="Medium (4px)">
+                                <span class="dot" style="width: 7px; height: 7px;"></span>
+                            </button>
+                            <button class="thickness-btn" data-width="7" data-tooltip="Thick (7px)">
+                                <span class="dot" style="width: 10px; height: 10px;"></span>
+                            </button>
+                            <button class="thickness-btn" data-width="12" data-tooltip="Extra Thick (12px)">
+                                <span class="dot" style="width: 14px; height: 14px;"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <button class="tool-btn" data-tool="circle" data-tooltip="Area Circle / Radius">
                     <i class="fa-regular fa-circle-dot"></i>
                 </button>
