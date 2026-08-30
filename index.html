@@ -7,19 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description"
         content="Plan your Clash of Clans tactical attacks interactively with grid boundaries and unit maker." />
-    <!-- FontAwesome Pro Icons -->
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/rizmyabdulla/fontawesome-pro@main/releases/v7.3.0/css/fontawesome.css" />
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/rizmyabdulla/fontawesome-pro@main/releases/v7.3.0/css/brands.css" />
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/rizmyabdulla/fontawesome-pro@main/releases/v7.3.0/css/solid.css" />
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/rizmyabdulla/fontawesome-pro@main/releases/v7.3.0/css/regular.css" />
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/rizmyabdulla/fontawesome-pro@main/releases/v7.3.0/css/duotone.css" />
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/rizmyabdulla/fontawesome-pro@main/releases/v7.3.0/css/sharp-solid.css" />
+    <!-- Remix Icon (Clean, Free & Open Source) -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet" />
     <!-- CSS Styles -->
     <link rel="stylesheet" href="style.css" />
 </head>
@@ -53,30 +42,37 @@
     <!-- Header Dashboard -->
     <header>
         <div class="logo-section">
-            <h1><i class="fa-sharp fa-regular fa-bullseye-arrow"></i> CoC <span>Attack Planner</span></h1>
+            <h1><i class="ri-focus-3-line"></i> CoC <span>Attack Planner</span></h1>
         </div>
 
         <div class="header-controls">
             <!-- Hidden input for file selection -->
             <input type="file" id="fileInput" accept="image/*" style="display: none;" />
             <button class="btn" id="uploadBtn" title="Upload Base Screenshot">
-                <i class="fa-solid fa-image"></i> <span class="btn-text">Upload Base</span>
+                <i class="ri-image-line"></i> <span class="btn-text">Upload Base</span>
             </button>
             <button class="btn btn-secondary" id="alignBtn" title="Align Grid Base">
-                <i class="fa-solid fa-unlock"></i> <span class="btn-text">Align Grid</span>
+                <i class="ri-lock-unlock-line"></i> <span class="btn-text">Align Grid</span>
             </button>
             <button class="btn btn-secondary" id="toggleBoundaryBtn" title="Show/Hide Red Boundary">
-                <i class="fa-solid fa-border-all"></i>
+                <i class="ri-grid-line"></i>
             </button>
-            <button class="btn btn-primary" id="downloadBtn" title="Download Strategy Image">
-                <i class="fa-solid fa-download"></i> <span class="btn-text">Download</span>
-            </button>
+            <!-- Split Action Button (Copy to Clipboard | Download PNG) -->
+            <div class="split-btn-group" id="exportSplitGroup">
+                <button class="split-btn-item" id="copyPlanBtn" title="Copy Plan to Clipboard (Ctrl+C)">
+                    <i class="ri-clipboard-line"></i> <span class="btn-text">Copy</span>
+                </button>
+                <div class="split-btn-divider"></div>
+                <button class="split-btn-item" id="downloadPlanBtn" title="Download Image (PNG)">
+                    <i class="ri-download-2-line"></i> <span class="btn-text">Download</span>
+                </button>
+            </div>
             <button class="btn btn-icon" id="fullscreenBtn" title="Fullscreen Mode">
-                <i class="fa-solid fa-expand"></i>
+                <i class="ri-fullscreen-line"></i>
             </button>
             <button class="btn btn-icon mobile-only-btn active" id="mobileSidebarToggle"
                 title="Open/Close Troops Panel">
-                <i class="fa-solid fa-swords"></i>
+                <i class="ri-sword-line"></i>
             </button>
         </div>
     </header>
@@ -88,13 +84,13 @@
         <aside class="sidebar left-sidebar" id="leftSidebar">
             <div class="tool-group">
                 <button class="tool-btn active" data-tool="select" data-tooltip="Select & Move (Esc)">
-                    <i class="fa-solid fa-arrow-pointer"></i>
+                    <i class="ri-cursor-line"></i>
                 </button>
 
                 <!-- Brush Tool with Popover -->
                 <div class="tool-wrapper">
                     <button class="tool-btn" data-tool="brush" data-tooltip="Free Draw / Brush">
-                        <i class="fa-solid fa-paintbrush-fine"></i>
+                        <i class="ri-brush-line"></i>
                     </button>
                     <div class="tool-popover" id="brushPopover">
                         <div class="popover-header">Brush Size</div>
@@ -118,7 +114,7 @@
                 <!-- Attack Arrow Tool with Popover -->
                 <div class="tool-wrapper">
                     <button class="tool-btn" data-tool="arrow" data-tooltip="Attack Arrow">
-                        <i class="fa-solid fa-arrow-right-long"></i>
+                        <i class="ri-arrow-right-line"></i>
                     </button>
                     <div class="tool-popover" id="arrowPopover">
                         <div class="popover-header">Arrow Size</div>
@@ -140,16 +136,16 @@
                 </div>
 
                 <button class="tool-btn" data-tool="circle" data-tooltip="Area Circle / Radius">
-                    <i class="fa-regular fa-circle-dot"></i>
+                    <i class="ri-record-circle-line"></i>
                 </button>
                 <button class="tool-btn" data-tool="xmark" data-tooltip="Plus Target (+)">
-                    <i class="fa-solid fa-xmark"></i>
+                    <i class="ri-add-line"></i>
                 </button>
                 <button class="tool-btn" data-tool="text" data-tooltip="Add Text Note">
-                    <i class="fa-sharp fa-solid fa-font"></i>
+                    <i class="ri-text"></i>
                 </button>
                 <button class="tool-btn" data-tool="eraser" data-tooltip="Marker Eraser">
-                    <i class="fa-sharp fa-solid fa-eraser"></i>
+                    <i class="ri-eraser-line"></i>
                 </button>
             </div>
 
@@ -172,13 +168,13 @@
 
                 <div class="action-buttons">
                     <button class="action-btn" id="undoBtn" data-tooltip="Undo (Ctrl+Z)"><i
-                            class="fa-solid fa-rotate-left"></i></button>
+                            class="ri-arrow-go-back-line"></i></button>
                     <button class="action-btn" id="redoBtn" data-tooltip="Redo (Ctrl+Y)"><i
-                            class="fa-solid fa-rotate-right"></i></button>
+                            class="ri-arrow-go-forward-line"></i></button>
                     <button class="action-btn" id="clearBtn" data-tooltip="Clear All Markers"><i
-                            class="fa-solid fa-trash"></i></button>
+                            class="ri-delete-bin-line"></i></button>
                     <button class="action-btn" id="helpBtn" data-tooltip="Help & Hotkeys"><i
-                            class="fa-solid fa-circle-question"></i></button>
+                            class="ri-question-line"></i></button>
                 </div>
             </div>
         </aside>
@@ -199,19 +195,19 @@
                     </div>
                     <p class="main-text">Upload a Base Screenshot</p>
                     <p class="sub-text">Please align the village to the grid borders after uploading</p>
-                    <button class="welcome-btn" id="welcomeChooseBtn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" x2="12" y1="3" y2="15"></line>
-                        </svg> Choose Image
-                    </button>
+                    <div class="welcome-btn-group">
+                        <button class="welcome-btn" id="welcomeChooseBtn">
+                            <i class="ri-folder-open-line"></i> Choose Image
+                        </button>
+                        <button class="welcome-btn welcome-btn-secondary" id="welcomePasteBtn" title="Paste Image from Clipboard">
+                            <i class="ri-clipboard-line"></i> Paste Image
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div class="drag-drop-overlay" id="dragOverlay">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <i class="ri-upload-cloud-2-line"></i>
                 <h2>Drop CoC base screenshot here</h2>
             </div>
 
@@ -223,16 +219,17 @@
             <!-- Floating Indicators & Controls -->
             <div class="floating-controls" id="floatingControls">
                 <div class="floater align-indicator" id="alignIndicator" style="display: none;">
-                    <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                    <i class="ri-drag-move-2-line"></i>
                     <span>Align Mode</span>
                 </div>
                 <div class="floater zoom-button-group">
-                    <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out (Scroll Down)"><i
-                            class="fa-solid fa-minus"></i></button>
-                    <button class="zoom-btn" id="zoomResetBtn" title="Fit to Screen"><i class="fa-solid fa-expand"></i>
+                    <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out (-1%, Shift for -5%)"><i
+                            class="ri-subtract-line"></i></button>
+                    <span class="zoom-value" id="zoomPercentage" title="Current Zoom Percentage (Click to reset 100%)">100%</span>
+                    <button class="zoom-btn" id="zoomResetBtn" title="Fit to Screen"><i class="ri-fullscreen-line"></i>
                         Fit</button>
-                    <button class="zoom-btn" id="zoomInBtn" title="Zoom In (Scroll Up)"><i
-                            class="fa-solid fa-plus"></i></button>
+                    <button class="zoom-btn" id="zoomInBtn" title="Zoom In (+1%, Shift for +5%)"><i
+                            class="ri-add-line"></i></button>
                 </div>
             </div>
 
@@ -240,9 +237,9 @@
             <div class="text-popover" id="textPopover">
                 <input type="text" id="popoverInput" placeholder="Write tactical note..." />
                 <button class="btn btn-primary" id="popoverSave" style="padding: 6px 12px;"><i
-                        class="fa-solid fa-check"></i></button>
+                        class="ri-check-line"></i></button>
                 <button class="btn" id="popoverCancel" style="padding: 6px 12px;"><i
-                        class="fa-solid fa-xmark"></i></button>
+                        class="ri-close-line"></i></button>
             </div>
         </main>
 
@@ -250,15 +247,15 @@
         <aside class="sidebar right-sidebar open" id="rightSidebar">
             <div class="sidebar-top-bar">
                 <div class="search-container">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <i class="ri-search-line search-icon"></i>
                     <input type="text" id="unitSearch" class="search-input"
                         placeholder="Search troops, heroes, spells..." autocomplete="off" />
                     <button class="search-clear-btn" id="clearSearchBtn" style="display: none;" title="Clear Search">
-                        <i class="fa-solid fa-circle-xmark"></i>
+                        <i class="ri-close-circle-fill"></i>
                     </button>
                 </div>
                 <button class="sidebar-action-btn mobile-sidebar-close" id="closeRightSidebarBtn" title="Close Panel">
-                    <i class="fa-solid fa-xmark"></i>
+                    <i class="ri-close-line"></i>
                 </button>
             </div>
 
@@ -276,7 +273,7 @@
             <div class="modal-header">
                 <h2>Attack Planner Quick Guide</h2>
                 <button class="modal-close" onclick="document.getElementById('helpModal').classList.remove('show')">
-                    <i class="fa-solid fa-xmark"></i>
+                    <i class="ri-close-line"></i>
                 </button>
             </div>
             <div class="modal-body">
@@ -290,6 +287,14 @@
 
                 <div class="hotkey-list" style="margin-top: 16px;">
                     <h3>Keyboard Shortcuts (Hotkeys):</h3>
+                    <div class="hotkey-item">
+                        <span>Paste Base Screenshot</span>
+                        <span class="hotkey-key">Ctrl + V</span>
+                    </div>
+                    <div class="hotkey-item">
+                        <span>Copy Plan to Clipboard</span>
+                        <span class="hotkey-key">Ctrl + C</span>
+                    </div>
                     <div class="hotkey-item">
                         <span>Undo</span>
                         <span class="hotkey-key">Ctrl + Z</span>
@@ -311,20 +316,32 @@
         </div>
     </div>
 
+    <!-- Feedback Action Toast (Copy, Notification, etc.) -->
+    <div id="actionToast" class="action-toast">
+        <i class="ri-checkbox-circle-fill action-toast-icon"></i>
+        <span id="actionToastText">Plan copied to clipboard!</span>
+    </div>
+
     <!-- Fullscreen Recommendation Toast for Mobile Landscape -->
     <div id="fullscreenToast" class="fullscreen-toast">
         <div class="toast-content">
-            <i class="fa-solid fa-lightbulb toast-icon"></i>
+            <i class="ri-lightbulb-line toast-icon"></i>
             <span>Use Fullscreen mode for the best planning area!</span>
         </div>
         <div class="toast-actions">
-            <button class="btn btn-sm btn-primary" id="toastFullscreenBtn">Go Fullscreen</button>
-            <button class="toast-close" id="toastCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+            <button class="btn btn-primary" id="toastFullscreenBtn">Go Fullscreen</button>
+            <button class="toast-close" id="toastCloseBtn"><i class="ri-close-line"></i></button>
         </div>
     </div>
 
-    <!-- Script Controller -->
-    <script src="planner.js"></script>
+    <!-- Modular Tactical Planner Scripts -->
+    <script src="js/constants.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/drawing.js"></script>
+    <script src="js/canvas.js"></script>
+    <script src="js/units.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/main.js"></script>
 </body>
 
 </html>

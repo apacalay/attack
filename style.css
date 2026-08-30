@@ -67,7 +67,7 @@ header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    z-index: 10;
+    z-index: 100;
 }
 
 .logo-section {
@@ -741,30 +741,38 @@ canvas {
 }
 
 /* Drag overlay helper when dropping base image */
-.drag-overlay {
+.drag-overlay,
+.drag-drop-overlay {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(11, 15, 23, 0.85);
+    background-color: rgba(11, 15, 23, 0.88);
     border: 3px dashed var(--accent-color);
     display: none;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     gap: 16px;
-    z-index: 100;
+    z-index: 1000;
+    pointer-events: none;
 }
 
-.drag-overlay i {
-    font-size: 3rem;
+.drag-overlay i,
+.drag-drop-overlay i {
+    font-size: 3.5rem;
     color: var(--accent-color);
 }
 
-.drag-overlay p {
-    font-size: 1.15rem;
-    font-weight: 500;
+.drag-overlay p,
+.drag-overlay h2,
+.drag-drop-overlay p,
+.drag-drop-overlay h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
 }
 
 /* Floating Controls (Zoom/Info) */
@@ -802,6 +810,26 @@ canvas {
 .zoom-button-group {
     padding: 4px 8px;
     gap: 6px;
+}
+
+.zoom-value {
+    font-weight: 700;
+    font-size: 0.8125rem;
+    color: var(--accent-color);
+    padding: 4px 8px;
+    background: rgba(59, 130, 246, 0.15);
+    border-radius: 4px;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    min-width: 46px;
+    text-align: center;
+    user-select: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.zoom-value:hover {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: var(--accent-color);
 }
 
 .zoom-btn {
@@ -1020,6 +1048,31 @@ canvas {
     
     .workspace {
         padding: 8px;
+    }
+
+    .floating-controls {
+        bottom: 12px;
+        left: 12px;
+        gap: 6px;
+    }
+
+    .zoom-button-group {
+        padding: 4px 6px;
+        gap: 4px;
+    }
+
+    .zoom-btn {
+        min-width: 34px;
+        min-height: 34px;
+        padding: 6px 10px;
+        font-size: 0.875rem;
+        touch-action: manipulation;
+    }
+
+    .zoom-value {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+        min-width: 42px;
     }
     
     /* Left Sidebar Compact */
@@ -1320,6 +1373,15 @@ canvas {
     margin-bottom: 16px;
 }
 
+.welcome-btn-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
 .welcome-btn {
     display: inline-flex;
     align-items: center;
@@ -1334,6 +1396,18 @@ canvas {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+}
+
+.welcome-btn-secondary {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.welcome-btn-secondary:hover {
+    background-color: var(--bg-hover) !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
 }
 
 .welcome-btn svg {
@@ -1617,4 +1691,225 @@ canvas {
         justify-content: flex-end;
     }
 }
+
+/* ==========================================================================
+   Export Dropdown Menu & Action Toast Notification
+   ========================================================================== */
+.dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+    min-width: 240px;
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 1000;
+    backdrop-filter: blur(12px);
+    transform-origin: top right;
+    animation: dropdownFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dropdown-menu.show {
+    display: flex;
+}
+
+@keyframes dropdownFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.95) translateY(-6px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.dropdown-item {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    transition: all 0.15s ease;
+}
+
+.dropdown-item i {
+    font-size: 1.25rem;
+    color: var(--accent-color);
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.dropdown-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dropdown-item-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.dropdown-item-sub {
+    font-size: 0.725rem;
+    color: var(--text-secondary);
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-input);
+}
+
+.dropdown-item:hover i {
+    transform: scale(1.15);
+}
+
+.dropdown-item:active {
+    transform: scale(0.98);
+}
+
+/* Action Toast Notification (Copy Success Feedback) */
+.action-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(40px);
+    background-color: rgba(17, 23, 38, 0.95);
+    border: 1px solid #10b981;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(8px);
+}
+
+.action-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.action-toast-icon {
+    font-size: 1.25rem;
+    color: #10b981;
+}
+
+/* ==========================================================================
+   Split Button Group (Copy | Download) - Auto-aligned padding based height
+   ========================================================================== */
+.split-btn-group {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 8px;
+    background-color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: 0;
+    gap: 0;
+    transition: all 0.2s ease;
+}
+
+.split-btn-group:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+    box-shadow: 0 0 12px var(--accent-shadow);
+}
+
+.split-btn-item {
+    background: transparent;
+    border: none;
+    color: #0b0f17;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.875rem; /* Matches .btn */
+    padding: 8px 12px;  /* Matches vertical padding of .btn */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    box-sizing: border-box;
+    line-height: 1.2;
+}
+
+.split-btn-item i {
+    font-size: 1rem;
+    color: #0b0f17;
+    display: inline-flex;
+    align-items: center;
+}
+
+.split-btn-item:hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: #000000;
+}
+
+.split-btn-item:active {
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.split-btn-item.copied {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+
+.split-btn-item.copied i {
+    color: #ffffff !important;
+}
+
+.split-btn-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(11, 15, 23, 0.25);
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   FINAL MOBILE & LANDSCAPE RESPONSIVE OVERRIDES (Must be at the very bottom)
+   ========================================================================== */
+@media (max-height: 600px), (max-width: 980px) {
+    .split-btn-item {
+        padding: 5px 8px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .split-btn-item i {
+        font-size: 0.8125rem !important;
+    }
+    
+    .split-btn-divider {
+        height: 12px !important;
+    }
+}
+
+
 
