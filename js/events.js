@@ -967,9 +967,9 @@ function setupEventListeners() {
                 }
             } else if (e.touches.length === 1) {
                 if (touchCooldown || isPinching) return;
-                // Allow touch dragging if it started anywhere inside the workspace container
-                if (e.target === canvas || e.target === workspaceEl || workspaceEl.contains(e.target)) {
-                    e.preventDefault(); // Stop default browser page scroll
+                // Only intercept touches started directly on the canvas or empty workspace area
+                if (e.target === canvas || e.target === workspaceEl) {
+                    e.preventDefault(); // Stop default browser page scroll/bouncing
                     handleMouseDown(e);
                 }
             }
@@ -1003,8 +1003,9 @@ function setupEventListeners() {
                     }
                 }
             } else if (e.touches.length === 1 && !isPinching && !touchCooldown) {
-                if (e.target === canvas || e.target === workspaceEl || workspaceEl.contains(e.target)) {
-                    e.preventDefault(); // Stop default browser page scroll
+                // Only intercept touch moves on the canvas or empty workspace area
+                if (e.target === canvas || e.target === workspaceEl) {
+                    e.preventDefault(); // Stop default browser page scroll/bouncing
                     handleMouseMove(e);
                 }
             }
