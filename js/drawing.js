@@ -31,9 +31,30 @@ function draw() {
 
     // 2. Draw base screenshot (if loaded) or splash image
     if (bgImage) {
-        ctx.save();
-        ctx.drawImage(bgImage, bgX, bgY, bgImage.width * bgScale, bgImage.height * bgScale);
-        ctx.restore();
+        if (isAlignMode) {
+            // Draw desaturated background first
+            ctx.save();
+            ctx.filter = "grayscale(100%)";
+            ctx.drawImage(bgImage, bgX, bgY, bgImage.width * bgScale, bgImage.height * bgScale);
+            ctx.restore();
+
+            // Clip to precision diamond grid and draw colored background inside it
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(951.5, 537 - 488);     // Top corner of diamond
+            ctx.lineTo(951.5 + 648.5, 537);   // Right corner
+            ctx.lineTo(951.5, 537 + 488);     // Bottom corner
+            ctx.lineTo(951.5 - 648.5, 537);   // Left corner
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(bgImage, bgX, bgY, bgImage.width * bgScale, bgImage.height * bgScale);
+            ctx.restore();
+        } else {
+            // In normal planning mode, draw entire background in full color
+            ctx.save();
+            ctx.drawImage(bgImage, bgX, bgY, bgImage.width * bgScale, bgImage.height * bgScale);
+            ctx.restore();
+        }
     } else if (splashImage && splashImage.complete) {
         ctx.drawImage(splashImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     } else {
