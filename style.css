@@ -1080,6 +1080,28 @@ canvas {
         width: 52px;
         padding: 6px 4px;
         gap: 6px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+    
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .left-sidebar::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .tool-popover {
+        position: fixed;
+        left: 58px;
+        top: 50%;
+        transform: translateY(-50%) translateX(-6px) scale(0.95);
+        z-index: 99999;
+    }
+    
+    .tool-popover.active {
+        transform: translateY(-50%) translateX(0) scale(1);
     }
     
     .tool-group {
