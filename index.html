@@ -220,7 +220,11 @@
             <div class="floating-controls" id="floatingControls">
                 <div class="floater align-indicator" id="alignIndicator" style="display: none;">
                     <i class="ri-drag-move-2-line"></i>
-                    <span>Align Mode</span>
+                    <span>Align Mode:</span>
+                    <div class="align-target-toggle">
+                        <button class="toggle-pill active" id="alignTargetImage" title="Drag & zoom base screenshot">Base Image</button>
+                        <button class="toggle-pill" id="alignTargetCanvas" title="Drag & zoom entire viewport to inspect corners">Workspace</button>
+                    </div>
                 </div>
                 <div class="floater zoom-button-group">
                     <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out (-1%, Shift for -5%)"><i

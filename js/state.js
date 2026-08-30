@@ -15,6 +15,7 @@ let initialBgScale = 1.0;
 let isAlignMode = false;
 let isLocked = false;
 let showMarkerOverlay = false;
+let alignControlTarget = "image"; // "image" or "view" to toggle gesture target during alignment
 
 // Drawing & Tool State
 let currentTool = Tools.SELECT;

@@ -22,6 +22,9 @@ function setTool(tool) {
         if (alignIndicator) alignIndicator.style.display = "none";
         updateBoundaryBtnUI();
         updateZoomIndicator();
+
+        // Reset control target to default: image
+        alignControlTarget = "image";
     }
 
     document.querySelectorAll(".left-sidebar .tool-btn").forEach(btn => {
@@ -67,6 +70,17 @@ function handleMouseDown(e) {
     const coords = getCanvasCoords(e);
 
     if (isAlignMode) {
+        if (alignControlTarget === "view" || e.button === 1 || e.button === 2 || isSpacePressed) {
+            e.preventDefault(); // Prevent browser default drag/selection
+            isPanningCanvas = true;
+            panStartMouseX = e.clientX;
+            panStartMouseY = e.clientY;
+            panStartCanvasX = canvasPanX;
+            panStartCanvasY = canvasPanY;
+            document.body.style.cursor = "grabbing";
+            return;
+        }
+
         isDraggingBg = true;
         dragStartX = coords.x - bgX;
         dragStartY = coords.y - bgY;
@@ -77,6 +91,7 @@ function handleMouseDown(e) {
     if (currentTool === Tools.SELECT) {
         // Direct Pan Navigation: If Right Click, Middle Click, or Spacebar pressed
         if (e.button === 1 || e.button === 2 || isSpacePressed) {
+            e.preventDefault(); // Prevent browser default scrolling or context menus
             isPanningCanvas = true;
             panStartMouseX = e.clientX;
             panStartMouseY = e.clientY;
@@ -179,8 +194,9 @@ function handleMouseDown(e) {
             }
         } else {
             isDraggingElement = false;
-            // If zoomed in and clicked on empty canvas, pan canvas smoothly
-            if (canvasUserZoom > 1.05) {
+            // If canvas is not centered/default, allow left-click panning on empty area
+            if (canvasUserZoom !== 1.0 || canvasPanX !== 0 || canvasPanY !== 0) {
+                e.preventDefault(); // Prevent browser default selection/image dragging
                 isPanningCanvas = true;
                 panStartMouseX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
                 panStartMouseY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
@@ -244,8 +260,8 @@ function handleMouseDown(e) {
 
         if (isGiantArrow) {
             isDrawing = true;
-            const defaultDx = (CANVAS_WIDTH / 2 - coords.x);
-            const defaultDy = (CANVAS_HEIGHT / 2 - coords.y);
+            const defaultDx = (951.5 - coords.x);
+            const defaultDy = (537 - coords.y);
             const angle = (defaultDx === 0 && defaultDy === 0) ? 0 : Math.atan2(defaultDy, defaultDx);
             giantArrowPreview = {
                 id: Date.now() + Math.random(),
@@ -389,8 +405,8 @@ function handleMouseUp() {
     if (isDrawing && giantArrowPreview) {
         const dist = Math.hypot(giantArrowPreview.x2 - giantArrowPreview.x1, giantArrowPreview.y2 - giantArrowPreview.y1);
         if (dist < 15) {
-            const defaultDx = (CANVAS_WIDTH / 2 - giantArrowPreview.x1);
-            const defaultDy = (CANVAS_HEIGHT / 2 - giantArrowPreview.y1);
+            const defaultDx = (951.5 - giantArrowPreview.x1);
+            const defaultDy = (537 - giantArrowPreview.y1);
             const angle = (defaultDx === 0 && defaultDy === 0) ? 0 : Math.atan2(defaultDy, defaultDx);
             giantArrowPreview.x2 = giantArrowPreview.x1 + Math.cos(angle) * 350;
             giantArrowPreview.y2 = giantArrowPreview.y1 + Math.sin(angle) * 350;
@@ -636,6 +652,22 @@ function setupEventListeners() {
         });
     }
 
+    // Toggle align control target (Base Image vs Workspace viewport)
+    const targetImageBtn = document.getElementById("alignTargetImage");
+    const targetCanvasBtn = document.getElementById("alignTargetCanvas");
+    if (targetImageBtn && targetCanvasBtn) {
+        targetImageBtn.addEventListener("click", () => {
+            alignControlTarget = "image";
+            targetImageBtn.classList.add("active");
+            targetCanvasBtn.classList.remove("active");
+        });
+        targetCanvasBtn.addEventListener("click", () => {
+            alignControlTarget = "view";
+            targetCanvasBtn.classList.add("active");
+            targetImageBtn.classList.remove("active");
+        });
+    }
+
     // Undo / Redo / Clear
     const undoBtn = document.getElementById("undoBtn");
     const redoBtn = document.getElementById("redoBtn");
@@ -791,14 +823,21 @@ function setupEventListeners() {
         workspaceEl.addEventListener("wheel", (e) => {
             e.preventDefault();
 
-            if (isAlignMode && bgImage) {
+            if (isAlignMode && bgImage && alignControlTarget === "image") {
                 const coords = getCanvasCoords(e);
                 const mouseX = coords.x;
                 const mouseY = coords.y;
                 const bgMouseX = (mouseX - bgX) / bgScale;
                 const bgMouseY = (mouseY - bgY) / bgScale;
-                const zoomFactor = e.deltaY < 0 ? 1.01 : 0.99;
-                const nextScale = Math.max(0.1, Math.min(6, bgScale * zoomFactor));
+
+                // Calculate current zoom percentage rounded to integer
+                const currentPercent = Math.round((bgScale / initialBgScale) * 100);
+
+                // Step by exactly 1% per scroll tick
+                let nextPercent = e.deltaY < 0 ? currentPercent + 1 : currentPercent - 1;
+                nextPercent = Math.max(10, Math.min(600, nextPercent));
+
+                const nextScale = initialBgScale * (nextPercent / 100);
                 bgX = mouseX - bgMouseX * nextScale;
                 bgY = mouseY - bgMouseY * nextScale;
                 bgScale = nextScale;
@@ -806,7 +845,7 @@ function setupEventListeners() {
                 draw();
             } else {
                 const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
-                canvasUserZoom = Math.max(0.5, Math.min(3.5, canvasUserZoom * zoomFactor));
+                canvasUserZoom = Math.max(0.5, Math.min(8.0, canvasUserZoom * zoomFactor));
                 updateCanvasTransform();
             }
         }, { passive: false });
@@ -830,7 +869,8 @@ function setupEventListeners() {
     // Panning navigation when zoomed
     if (workspaceEl) {
         workspaceEl.addEventListener("mousedown", (e) => {
-            if (e.button === 1 || e.button === 2 || isSpacePressed || (canvasUserZoom > 1.05 && e.target === workspaceEl)) {
+            if (e.button === 1 || e.button === 2 || isSpacePressed ||
+                ((canvasUserZoom !== 1.0 || canvasPanX !== 0 || canvasPanY !== 0) && e.target === workspaceEl)) {
                 e.preventDefault();
                 isPanningCanvas = true;
                 panStartMouseX = e.clientX;
@@ -857,7 +897,7 @@ function setupEventListeners() {
         });
 
         workspaceEl.addEventListener("contextmenu", (e) => {
-            if (isPanningCanvas || canvasUserZoom > 1.05) {
+            if (isPanningCanvas || canvasUserZoom !== 1.0 || canvasPanX !== 0 || canvasPanY !== 0) {
                 e.preventDefault();
             }
         });
@@ -911,6 +951,12 @@ function setupEventListeners() {
 
                 if (isAlignMode && bgImage) {
                     initialBgState = { x: bgX, y: bgY, scale: bgScale };
+                    const initCoords = getCanvasCoords({
+                        clientX: touchInfo.center.clientX,
+                        clientY: touchInfo.center.clientY
+                    });
+                    initialBgState.pinchBgX = (initCoords.x - bgX) / bgScale;
+                    initialBgState.pinchBgY = (initCoords.y - bgY) / bgScale;
                 } else {
                     initialPinchScale = canvasUserZoom;
                     initialCanvasPan = { x: canvasPanX, y: canvasPanY };
@@ -931,14 +977,18 @@ function setupEventListeners() {
                     const panDeltaX = touchInfo.center.clientX - initialPinchCenter.clientX;
                     const panDeltaY = touchInfo.center.clientY - initialPinchCenter.clientY;
 
-                    if (isAlignMode && bgImage) {
+                    if (isAlignMode && bgImage && alignControlTarget === "image") {
+                        const currentCoords = getCanvasCoords({
+                            clientX: touchInfo.center.clientX,
+                            clientY: touchInfo.center.clientY
+                        });
                         bgScale = Math.max(0.1, Math.min(6, initialBgState.scale * scaleFactor));
-                        bgX = initialBgState.x + panDeltaX;
-                        bgY = initialBgState.y + panDeltaY;
+                        bgX = currentCoords.x - initialBgState.pinchBgX * bgScale;
+                        bgY = currentCoords.y - initialBgState.pinchBgY * bgScale;
                         updateZoomIndicator();
                         draw();
                     } else {
-                        canvasUserZoom = Math.max(0.5, Math.min(3.5, initialPinchScale * scaleFactor));
+                        canvasUserZoom = Math.max(0.5, Math.min(8.0, initialPinchScale * scaleFactor));
                         canvasPanX = initialCanvasPan.x + panDeltaX;
                         canvasPanY = initialCanvasPan.y + panDeltaY;
                         updateCanvasTransform();
@@ -1051,19 +1101,49 @@ function setupEventListeners() {
     const zoomPercentageEl = document.getElementById("zoomPercentage");
 
     function performZoomIn(multiplier = 1) {
-        if (isAlignMode && bgImage) {
-            bgScale = Math.min(6, bgScale * (1 + 0.01 * multiplier));
+        if (isAlignMode && bgImage && alignControlTarget === "image") {
+            const cx = 951.5;
+            const cy = 537;
+            const bgCenterX = (cx - bgX) / bgScale;
+            const bgCenterY = (cy - bgY) / bgScale;
+
+            // Calculate current zoom percentage
+            const currentPercent = Math.round((bgScale / initialBgScale) * 100);
+
+            // Step up by flat 1% * multiplier
+            let nextPercent = currentPercent + 1 * multiplier;
+            nextPercent = Math.max(10, Math.min(600, nextPercent));
+
+            const nextScale = initialBgScale * (nextPercent / 100);
+            bgX = cx - bgCenterX * nextScale;
+            bgY = cy - bgCenterY * nextScale;
+            bgScale = nextScale;
             updateZoomIndicator();
             draw();
         } else {
-            canvasUserZoom = Math.min(3.5, canvasUserZoom * (1 + 0.03 * multiplier));
+            canvasUserZoom = Math.min(8.0, canvasUserZoom * (1 + 0.03 * multiplier));
             updateCanvasTransform();
         }
     }
 
     function performZoomOut(multiplier = 1) {
-        if (isAlignMode && bgImage) {
-            bgScale = Math.max(0.1, bgScale / (1 + 0.01 * multiplier));
+        if (isAlignMode && bgImage && alignControlTarget === "image") {
+            const cx = 951.5;
+            const cy = 537;
+            const bgCenterX = (cx - bgX) / bgScale;
+            const bgCenterY = (cy - bgY) / bgScale;
+
+            // Calculate current zoom percentage
+            const currentPercent = Math.round((bgScale / initialBgScale) * 100);
+
+            // Step down by flat 1% * multiplier
+            let nextPercent = currentPercent - 1 * multiplier;
+            nextPercent = Math.max(10, Math.min(600, nextPercent));
+
+            const nextScale = initialBgScale * (nextPercent / 100);
+            bgX = cx - bgCenterX * nextScale;
+            bgY = cy - bgCenterY * nextScale;
+            bgScale = nextScale;
             updateZoomIndicator();
             draw();
         } else {
@@ -1146,8 +1226,8 @@ function showActionToast(message, isSuccess = true) {
     if (toastText) toastText.innerText = message;
     const icon = toast.querySelector(".action-toast-icon");
     if (icon) {
-        icon.className = isSuccess 
-            ? "ri-checkbox-circle-fill action-toast-icon" 
+        icon.className = isSuccess
+            ? "ri-checkbox-circle-fill action-toast-icon"
             : "ri-error-warning-fill action-toast-icon";
         icon.style.color = isSuccess ? "#10b981" : "#ef4444";
         toast.style.borderColor = isSuccess ? "#10b981" : "#ef4444";

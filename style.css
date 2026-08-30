@@ -1485,6 +1485,37 @@ canvas {
     animation: alignPulse 1.5s infinite alternate;
 }
 
+.align-target-toggle {
+    display: flex;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-left: 4px;
+}
+
+.toggle-pill {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-family: inherit;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-pill:hover {
+    color: #ffffff;
+}
+
+.toggle-pill.active {
+    background-color: var(--accent-color);
+    color: #0b0f19;
+}
+
 .floating-controls.align-mode .floater {
     box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
     border-color: rgba(245, 158, 11, 0.3);

@@ -150,6 +150,13 @@ function toggleAlignMode() {
         showMarkerOverlay = true;
         updateBoundaryBtnUI();
         setTool(Tools.SELECT); // Force select tool for aligning
+        
+        // Reset control target to default: image and update UI pills
+        alignControlTarget = "image";
+        const targetImageBtn = document.getElementById("alignTargetImage");
+        const targetCanvasBtn = document.getElementById("alignTargetCanvas");
+        if (targetImageBtn) targetImageBtn.classList.add("active");
+        if (targetCanvasBtn) targetCanvasBtn.classList.remove("active");
     } else {
         if (alignBtn) {
             alignBtn.innerHTML = '<i class="ri-lock-unlock-line"></i> <span class="btn-text">Align Grid</span>';
@@ -160,6 +167,9 @@ function toggleAlignMode() {
         if (alignIndicator) alignIndicator.style.display = "none";
         showMarkerOverlay = false;
         updateBoundaryBtnUI();
+        
+        // Reset control target
+        alignControlTarget = "image";
     }
     updateZoomIndicator();
     if (typeof draw === "function") draw();

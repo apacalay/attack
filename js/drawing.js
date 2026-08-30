@@ -32,12 +32,7 @@ function draw() {
     // 2. Draw base screenshot (if loaded) or splash image
     if (bgImage) {
         ctx.save();
-        if (isAlignMode) {
-            // Desaturate to 100% grayscale in alignment mode
-            ctx.filter = "grayscale(100%)";
-        }
         ctx.drawImage(bgImage, bgX, bgY, bgImage.width * bgScale, bgImage.height * bgScale);
-        ctx.filter = "none";
         ctx.restore();
     } else if (splashImage && splashImage.complete) {
         ctx.drawImage(splashImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -54,14 +49,12 @@ function draw() {
         ctx.restore();
     }
 
-    // 3. Draw marker.webp boundary overlay (if alignment mode active OR boundary toggled ON)
+    // 3. Draw marker boundary overlay (if alignment mode active OR boundary toggled ON)
     if (isAlignMode || showMarkerOverlay) {
-        if (markerImage && markerImage.complete) {
-            ctx.save();
-            ctx.globalAlpha = 0.45;
-            ctx.drawImage(markerImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-            ctx.restore();
-        }
+        // marker.webp is no longer drawn. We only draw the sharp cyan guides now.
+
+        // Draw 1px sharp precision alignment guides (dashed border, corner brackets, and center crosshair)
+        drawPrecisionAlignmentGuides(ctx);
 
         if (isAlignMode) {
             // Alignment Mode Banner Header Inside Canvas
@@ -449,8 +442,8 @@ function drawText(text, x, y, color, fontSize, isSelected) {
 // --------------------------------------------------------------------------
 
 function drawRocketBackpackBeam(startX, startY) {
-    const centerX = CANVAS_WIDTH / 2;
-    const centerY = CANVAS_HEIGHT / 2;
+    const centerX = 951.5;
+    const centerY = 537;
 
     const dx = centerX - startX;
     const dy = centerY - startY;
@@ -539,8 +532,8 @@ function drawRocketBackpackBeam(startX, startY) {
 }
 
 function drawFlameBlowerCone(startX, startY) {
-    const centerX = CANVAS_WIDTH / 2;
-    const centerY = CANVAS_HEIGHT / 2;
+    const centerX = 951.5;
+    const centerY = 537;
 
     const dx = centerX - startX;
     const dy = centerY - startY;
@@ -891,8 +884,13 @@ function drawUnitIcon(el, isSelected) {
     let renderX = el.x;
     let renderY = el.y;
 
+    if (isSpell && spellConfig) {
+        renderX = el.x + 50;
+        renderY = el.y - 50;
+    }
+
     if (isDirectionalEquipment) {
-        const angle = Math.atan2(CANVAS_HEIGHT / 2 - el.y, CANVAS_WIDTH / 2 - el.x);
+        const angle = Math.atan2(537 - el.y, 951.5 - el.x);
         const offsetDist = 50;
         renderX = el.x - Math.cos(angle) * offsetDist;
         renderY = el.y - Math.sin(angle) * offsetDist;
@@ -985,6 +983,7 @@ function drawUnitIcon(el, isSelected) {
         const radiusY = spellConfig.radiusTiles * TILE_SCALE_Y;
 
         ctx.save();
+        // 1. AoE Ground Ellipse
         ctx.beginPath();
         ctx.ellipse(el.x, el.y, radiusX, radiusY, 0, 0, Math.PI * 2);
         ctx.fillStyle = spellConfig.color;
@@ -994,11 +993,44 @@ function drawUnitIcon(el, isSelected) {
         ctx.setLineDash([6, 6]);
         ctx.stroke();
         ctx.setLineDash([]);
+
+        // 2. Leader dashed connector
+        ctx.beginPath();
+        ctx.moveTo(renderX, renderY);
+        ctx.lineTo(el.x, el.y);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+
+        // 3. Center Target Crosshair
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(el.x - 10, el.y);
+        ctx.lineTo(el.x + 10, el.y);
+        ctx.moveTo(el.x, el.y - 10);
+        ctx.lineTo(el.x, el.y + 10);
+        ctx.stroke();
+
+        // 4. Center Target Dot
+        ctx.beginPath();
+        ctx.arc(el.x, el.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = spellConfig.stroke;
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
         ctx.restore();
     }
 
     // Clip circle for icon image
     ctx.save();
+    if (isSpell && spellConfig) {
+        ctx.globalAlpha = 0.75; // Slightly transparent spell icon
+    }
     ctx.beginPath();
     ctx.arc(renderX, renderY, currentRadius, 0, Math.PI * 2);
     ctx.closePath();
@@ -1014,11 +1046,15 @@ function drawUnitIcon(el, isSelected) {
 
     // Render icon border
     ctx.save();
+    if (isSpell && spellConfig) {
+        ctx.globalAlpha = 0.5; // Matching transparency for border
+    }
     ctx.beginPath();
     ctx.arc(renderX, renderY, currentRadius, 0, Math.PI * 2);
     ctx.strokeStyle = isSelected ? "#00ffff" : "#ffffff";
     ctx.lineWidth = isSelected ? 3 : 2;
     ctx.stroke();
+    ctx.restore();
 
     // Deployment Order badge
     const badgeR = isSpell ? 8 : (isEquipment ? 11 : 12);
@@ -1050,6 +1086,7 @@ function isClickOnElement(coords, el) {
     if (el.type === Tools.ICON) {
         const folder = (el.folder || el.src || "").toLowerCase();
         const unitKey = (el.name || "").toLowerCase().trim();
+        const spellConfig = SPELL_RADII[unitKey];
         const isSpell = folder.includes("spell");
         const isEquipment = folder.includes("equipment");
         let radius = ICON_SIZE;
@@ -1062,9 +1099,18 @@ function isClickOnElement(coords, el) {
         // Backward-offset directional equipment
         if (unitKey.includes("rocket backpack") || unitKey.includes("rocket_backpack") ||
             unitKey.includes("flame blower") || unitKey.includes("flame_blower")) {
-            const angle = Math.atan2(CANVAS_HEIGHT / 2 - el.y, CANVAS_WIDTH / 2 - el.x);
+            const angle = Math.atan2(537 - el.y, 951.5 - el.x);
             const iconX = el.x - Math.cos(angle) * 50;
             const iconY = el.y - Math.sin(angle) * 50;
+            if (Math.hypot(coords.x - iconX, coords.y - iconY) < (radius + 6)) return true;
+            if (Math.hypot(coords.x - el.x, coords.y - el.y) < 22) return true;
+            return false;
+        }
+
+        // Spell offset
+        if (isSpell && spellConfig) {
+            const iconX = el.x + 50;
+            const iconY = el.y - 50;
             if (Math.hypot(coords.x - iconX, coords.y - iconY) < (radius + 6)) return true;
             if (Math.hypot(coords.x - el.x, coords.y - el.y) < 22) return true;
             return false;
@@ -1155,4 +1201,89 @@ function isClickOnElement(coords, el) {
     }
 
     return false;
+}
+
+function drawPrecisionAlignmentGuides(ctx) {
+    // Offset center of the diamond inside marker.webp to match the image exactly:
+    // Bounding Box: min_x=303, max_x=1600 (width=1297px), min_y=49, max_y=1025 (height=976px)
+    // Calculated Center: (951.5, 537)
+    const cx = 951.5;
+    const cy = 537;
+
+    const hw = 648.5; // Half width (1297 / 2)
+    const hh = 488;   // Half height (976 / 2)
+
+    const topY = cy - hh;
+    const bottomY = cy + hh;
+    const leftX = cx - hw;
+    const rightX = cx + hw;
+
+    ctx.save();
+
+    // 1. Draw thin 1px dashed guideline connecting the four corners (The Exact Border Line)
+    ctx.beginPath();
+    ctx.moveTo(cx, topY);
+    ctx.lineTo(rightX, cy);
+    ctx.lineTo(cx, bottomY);
+    ctx.lineTo(leftX, cy);
+    ctx.closePath();
+    ctx.strokeStyle = "rgba(34, 211, 238, 0.65)"; // Bright Neon Cyan (transparent)
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 2. Draw sharp corner brackets (Siku-siku) at each tip (1.5px solid Neon Cyan)
+    ctx.strokeStyle = "#22d3ee"; // Neon Cyan
+    ctx.lineWidth = 1.5;
+    const len = 30; // length of bracket arms
+    const slopeY = len * ISO_Y_RATIO;
+
+    // Top Corner
+    ctx.beginPath();
+    ctx.moveTo(cx - len, topY + slopeY);
+    ctx.lineTo(cx, topY);
+    ctx.lineTo(cx + len, topY + slopeY);
+    ctx.stroke();
+
+    // Bottom Corner
+    ctx.beginPath();
+    ctx.moveTo(cx - len, bottomY - slopeY);
+    ctx.lineTo(cx, bottomY);
+    ctx.lineTo(cx + len, bottomY - slopeY);
+    ctx.stroke();
+
+    // Left Corner
+    ctx.beginPath();
+    ctx.moveTo(leftX + len, cy - slopeY);
+    ctx.lineTo(leftX, cy);
+    ctx.lineTo(leftX + len, cy + slopeY);
+    ctx.stroke();
+
+    // Right Corner
+    ctx.beginPath();
+    ctx.moveTo(rightX - len, cy - slopeY);
+    ctx.lineTo(rightX, cy);
+    ctx.lineTo(rightX - len, cy + slopeY);
+    ctx.stroke();
+
+    // 3. Draw Center Precision Crosshair (cx, cy)
+    ctx.strokeStyle = "#22d3ee";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    // Horizontal crosshair
+    ctx.moveTo(cx - 15, cy);
+    ctx.lineTo(cx + 15, cy);
+    // Vertical crosshair
+    ctx.moveTo(cx, cy - 15);
+    ctx.lineTo(cx, cy + 15);
+    ctx.stroke();
+
+    // Draw tiny circle at center
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = "#22d3ee";
+    ctx.fill();
+
+    ctx.restore();
 }
