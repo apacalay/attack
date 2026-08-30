@@ -68,13 +68,17 @@ function updateThicknessUI(width) {
 
 function handleMouseDown(e) {
     const coords = getCanvasCoords(e);
+    
+    // Safely extract client coordinates for both mouse and touch events
+    const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+    const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
 
     if (isAlignMode) {
         if (alignControlTarget === "view" || e.button === 1 || e.button === 2 || isSpacePressed) {
             e.preventDefault(); // Prevent browser default drag/selection
             isPanningCanvas = true;
-            panStartMouseX = e.clientX;
-            panStartMouseY = e.clientY;
+            panStartMouseX = clientX;
+            panStartMouseY = clientY;
             panStartCanvasX = canvasPanX;
             panStartCanvasY = canvasPanY;
             document.body.style.cursor = "grabbing";
@@ -93,8 +97,8 @@ function handleMouseDown(e) {
         if (e.button === 1 || e.button === 2 || isSpacePressed) {
             e.preventDefault(); // Prevent browser default scrolling or context menus
             isPanningCanvas = true;
-            panStartMouseX = e.clientX;
-            panStartMouseY = e.clientY;
+            panStartMouseX = clientX;
+            panStartMouseY = clientY;
             panStartCanvasX = canvasPanX;
             panStartCanvasY = canvasPanY;
             document.body.style.cursor = "grabbing";
@@ -198,8 +202,8 @@ function handleMouseDown(e) {
             if (canvasUserZoom !== 1.0 || canvasPanX !== 0 || canvasPanY !== 0) {
                 e.preventDefault(); // Prevent browser default selection/image dragging
                 isPanningCanvas = true;
-                panStartMouseX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
-                panStartMouseY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
+                panStartMouseX = clientX;
+                panStartMouseY = clientY;
                 panStartCanvasX = canvasPanX;
                 panStartCanvasY = canvasPanY;
                 document.body.style.cursor = "grabbing";
@@ -963,7 +967,11 @@ function setupEventListeners() {
                 }
             } else if (e.touches.length === 1) {
                 if (touchCooldown || isPinching) return;
-                if (e.target === canvas) handleMouseDown(e);
+                // Allow touch dragging if it started anywhere inside the workspace container
+                if (e.target === canvas || e.target === workspaceEl || workspaceEl.contains(e.target)) {
+                    e.preventDefault(); // Stop default browser page scroll
+                    handleMouseDown(e);
+                }
             }
         }, { passive: false });
 
@@ -994,8 +1002,11 @@ function setupEventListeners() {
                         updateCanvasTransform();
                     }
                 }
-            } else if (e.touches.length === 1 && !isPinching && !touchCooldown && e.target === canvas) {
-                handleMouseMove(e);
+            } else if (e.touches.length === 1 && !isPinching && !touchCooldown) {
+                if (e.target === canvas || e.target === workspaceEl || workspaceEl.contains(e.target)) {
+                    e.preventDefault(); // Stop default browser page scroll
+                    handleMouseMove(e);
+                }
             }
         }, { passive: false });
 
@@ -1006,7 +1017,7 @@ function setupEventListeners() {
                     initialPinchDistance = 0;
                     setTimeout(() => { touchCooldown = false; }, 120);
                 } else {
-                    if (e.target === canvas) handleMouseUp();
+                    handleMouseUp();
                 }
             } else if (e.touches.length === 1 && isPinching) {
                 e.preventDefault();
