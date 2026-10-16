@@ -2,6 +2,11 @@
 // USER INTERACTIONS, TOOL CONTROLLERS & EVENT LISTENERS
 // ==========================================================================
 
+// Dismiss all active tool popovers
+function closeAllPopovers() {
+    document.querySelectorAll(".tool-popover.active").forEach(p => p.classList.remove("active"));
+}
+
 // Set active drawing tool
 function setTool(tool) {
     currentTool = tool;
@@ -34,19 +39,22 @@ function setTool(tool) {
         }
     });
 
-    // Toggle popovers for tools with options
-    document.querySelectorAll(".tool-popover").forEach(p => p.classList.remove("active"));
+    // Synchronize stroke thickness with remembered tool width
     if (tool === Tools.BRUSH) {
-        const popover = document.getElementById("brushPopover");
-        if (popover) popover.classList.add("active");
+        currentWidth = brushWidth || 2;
+        updateThicknessUI(currentWidth);
     } else if (tool === Tools.ARROW) {
-        const popover = document.getElementById("arrowPopover");
-        if (popover) popover.classList.add("active");
+        currentWidth = arrowWidth || 4;
+        updateThicknessUI(currentWidth);
     }
 
     if (tool !== Tools.ICON) {
         document.querySelectorAll(".unit-item").forEach(u => u.classList.remove("active"));
         window.selectedUnit = null;
+    }
+
+    if (tool !== Tools.SELECT) {
+        if (typeof hideHeroGearDock === "function") hideHeroGearDock();
     }
 
     selectedElement = null;
@@ -55,7 +63,14 @@ function setTool(tool) {
 
 function updateThicknessUI(width) {
     if (!width) return;
-    const thicknessBtns = document.querySelectorAll(".thickness-btn");
+    const activePopover = (currentTool === Tools.ARROW)
+        ? document.getElementById("arrowPopover")
+        : document.getElementById("brushPopover");
+
+    const thicknessBtns = activePopover
+        ? activePopover.querySelectorAll(".thickness-btn")
+        : document.querySelectorAll(".thickness-btn");
+
     thicknessBtns.forEach(b => {
         const btnW = parseFloat(b.dataset.width);
         b.classList.toggle("active", Math.abs(btnW - width) < 0.5);
@@ -67,6 +82,7 @@ function updateThicknessUI(width) {
 // --------------------------------------------------------------------------
 
 function handleMouseDown(e) {
+    closeAllPopovers();
     const coords = getCanvasCoords(e);
     
     // Safely extract client coordinates for both mouse and touch events
@@ -180,6 +196,12 @@ function handleMouseDown(e) {
 
         selectedElement = clickedElement;
         if (selectedElement) {
+            if (typeof getHeroKey === "function" && getHeroKey(selectedElement)) {
+                showHeroGearDock(selectedElement);
+            } else if (typeof hideHeroGearDock === "function") {
+                hideHeroGearDock();
+            }
+
             if (selectedElement.width) {
                 updateThicknessUI(selectedElement.width);
             }
@@ -197,6 +219,7 @@ function handleMouseDown(e) {
                 dragOffset.y = coords.y - refY;
             }
         } else {
+            if (typeof hideHeroGearDock === "function") hideHeroGearDock();
             isDraggingElement = false;
             // If canvas is not centered/default, allow left-click panning on empty area
             if (canvasUserZoom !== 1.0 || canvasPanX !== 0 || canvasPanY !== 0) {
@@ -297,8 +320,14 @@ function handleMouseDown(e) {
         saveState();
 
         setTool(Tools.SELECT);
-        selectedElement = null;
+        selectedElement = newElement;
         isDraggingElement = false;
+
+        if (typeof getHeroKey === "function" && getHeroKey(newElement)) {
+            showHeroGearDock(newElement);
+        } else if (typeof hideHeroGearDock === "function") {
+            hideHeroGearDock();
+        }
 
         draw();
     } else if (currentTool === Tools.ERASER) {
@@ -339,8 +368,12 @@ function handleMouseMove(e) {
         draw();
         return;
     } else if (isDrawing && currentTool === Tools.BRUSH && brushPreview) {
-        brushPreview.push({ x: coords.x, y: coords.y });
-        draw();
+        const lastPoint = brushPreview[brushPreview.length - 1];
+        const dist = Math.hypot(coords.x - lastPoint.x, coords.y - lastPoint.y);
+        if (dist >= 2.5) {
+            brushPreview.push({ x: coords.x, y: coords.y });
+            draw();
+        }
     } else if (isDrawing && currentTool === Tools.ARROW && arrowPreview) {
         arrowPreview.x2 = coords.x;
         arrowPreview.y2 = coords.y;
@@ -462,10 +495,6 @@ function handleMouseUp() {
             };
             elements.push(newArrow);
             saveState();
-
-            setTool(Tools.SELECT);
-            selectedElement = null;
-            isDraggingElement = false;
         }
         arrowPreview = null;
         isDrawing = false;
@@ -499,16 +528,165 @@ function handleMouseUp() {
     }
 }
 
+// ==========================================================================
+// HERO EQUIPMENT CONTEXTUAL SHORTCUT DOCK
+// ==========================================================================
+
+let currentActiveHeroForGear = null;
+
+function getHeroKey(el) {
+    if (!el || (el.type !== Tools.ICON && el.type !== "icon")) return null;
+    const name = (el.name || "").toLowerCase().replace(/_/g, " ").trim();
+    if (typeof HERO_EQUIPMENT_MAP === "undefined") return null;
+    for (const key in HERO_EQUIPMENT_MAP) {
+        if (name.includes(key)) return key;
+    }
+    return null;
+}
+
+function showHeroGearDock(heroEl) {
+    const heroKey = getHeroKey(heroEl);
+    if (!heroKey || !HERO_EQUIPMENT_MAP[heroKey]) {
+        hideHeroGearDock();
+        return;
+    }
+
+    currentActiveHeroForGear = heroEl;
+    const heroConfig = HERO_EQUIPMENT_MAP[heroKey];
+    const dock = document.getElementById("heroGearDock");
+    const title = document.getElementById("heroGearName");
+    const itemsContainer = document.getElementById("heroGearItems");
+
+    if (!dock || !title || !itemsContainer) return;
+
+    title.innerHTML = `<i class="ri-vip-crown-2-line"></i> ${heroConfig.heroName}`;
+    itemsContainer.innerHTML = "";
+
+    heroConfig.items.forEach(gear => {
+        const btn = document.createElement("button");
+        btn.className = "gear-item-btn";
+        btn.title = gear.name;
+        btn.innerHTML = `<img src="assets/Hereos Equipment/${gear.file}" alt="${gear.name}" loading="lazy" />`;
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            equipGearToHero(currentActiveHeroForGear, gear);
+        });
+        itemsContainer.appendChild(btn);
+    });
+
+    dock.classList.add("active");
+}
+
+function hideHeroGearDock() {
+    currentActiveHeroForGear = null;
+    const dock = document.getElementById("heroGearDock");
+    if (dock) dock.classList.remove("active");
+}
+
+function equipGearToHero(heroEl, gear) {
+    if (!heroEl) return;
+
+    // Count existing equipment attached to or near this hero
+    const existingGears = elements.filter(el => {
+        if (!el || (el.type !== Tools.ICON && el.type !== "giant_arrow")) return false;
+        const f = (el.folder || el.src || "").toLowerCase();
+        const isEq = f.includes("equipment");
+        const dist = Math.hypot((el.x !== undefined ? el.x : el.x1) - heroEl.x, (el.y !== undefined ? el.y : el.y1) - heroEl.y);
+        return isEq && dist < 120;
+    });
+
+    const gearIndex = existingGears.length;
+    // Sequential offset positions around hero:
+    // 1st: Right-side (+40, -8)
+    // 2nd: Left-side  (-40, -8)
+    // 3rd: Top-side   (0, -46)
+    // 4th: Bottom-side(0, +38)
+    const gearOffsets = [
+        { dx: 40, dy: -8 },
+        { dx: -40, dy: -8 },
+        { dx: 0, dy: -46 },
+        { dx: 0, dy: 38 }
+    ];
+    const offset = gearOffsets[gearIndex % gearOffsets.length];
+    const targetX = Math.round(heroEl.x + offset.dx);
+    const targetY = Math.round(heroEl.y + offset.dy);
+
+    const isGiantArrow = (gear.name || "").toLowerCase().includes("giant arrow");
+    let newElement;
+
+    if (isGiantArrow) {
+        const defaultDx = (951.5 - heroEl.x);
+        const defaultDy = (537 - heroEl.y);
+        const angle = (defaultDx === 0 && defaultDy === 0) ? 0 : Math.atan2(defaultDy, defaultDx);
+        newElement = {
+            id: Date.now() + Math.random(),
+            type: "giant_arrow",
+            x1: heroEl.x,
+            y1: heroEl.y,
+            x2: Math.round(heroEl.x + Math.cos(angle) * 350),
+            y2: Math.round(heroEl.y + Math.sin(angle) * 350),
+            src: `assets/Hereos Equipment/${gear.file}`,
+            name: gear.name,
+            folder: "Hereos Equipment",
+            orderNum: deploymentOrder++
+        };
+    } else {
+        newElement = {
+            id: Date.now() + Math.random(),
+            type: Tools.ICON,
+            x: targetX,
+            y: targetY,
+            src: `assets/Hereos Equipment/${gear.file}`,
+            name: gear.name,
+            folder: "Hereos Equipment",
+            orderNum: deploymentOrder++
+        };
+    }
+
+    elements.push(newElement);
+    saveState();
+    draw();
+
+    if (typeof showActionToast === "function") {
+        showActionToast(`${gear.name} equipped!`);
+    }
+}
+
 // --------------------------------------------------------------------------
 // Full Event Listeners Initialization
 // --------------------------------------------------------------------------
 
 function setupEventListeners() {
-    // Toolbar buttons
+    // Toolbar buttons with clean popover toggle
     document.querySelectorAll(".left-sidebar .tool-btn").forEach(btn => {
         const tool = btn.dataset.tool;
         if (tool) {
-            btn.addEventListener("click", () => setTool(tool));
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (tool === Tools.BRUSH || tool === Tools.ARROW) {
+                    const popoverId = (tool === Tools.BRUSH) ? "brushPopover" : "arrowPopover";
+                    const popover = document.getElementById(popoverId);
+                    const isPopoverOpen = popover ? popover.classList.contains("active") : false;
+
+                    if (currentTool === tool) {
+                        // Toggle popover if clicking the already active tool
+                        closeAllPopovers();
+                        if (!isPopoverOpen && popover) {
+                            popover.classList.add("active");
+                        }
+                    } else {
+                        // Switch tool and open popover for quick size picking
+                        closeAllPopovers();
+                        setTool(tool);
+                        if (popover) {
+                            popover.classList.add("active");
+                        }
+                    }
+                } else {
+                    closeAllPopovers();
+                    setTool(tool);
+                }
+            });
         }
     });
 
@@ -521,12 +699,17 @@ function setupEventListeners() {
         });
     });
 
-    // Stroke Thickness Selector
+    // Stroke Thickness Selector (Auto-dismiss on selection)
     const thicknessBtns = document.querySelectorAll(".thickness-btn");
     thicknessBtns.forEach(btn => {
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
             currentWidth = parseFloat(btn.dataset.width) || 4;
+            if (currentTool === Tools.BRUSH) {
+                brushWidth = currentWidth;
+            } else if (currentTool === Tools.ARROW) {
+                arrowWidth = currentWidth;
+            }
             updateThicknessUI(currentWidth);
 
             if (selectedElement && (selectedElement.type === Tools.BRUSH || selectedElement.type === Tools.ARROW)) {
@@ -534,8 +717,32 @@ function setupEventListeners() {
                 saveState();
                 draw();
             }
+
+            // AUTO-DISMISS: Close popover immediately when a size is picked!
+            closeAllPopovers();
         });
     });
+
+    // Auto-dismiss tool popovers on click outside
+    document.addEventListener("pointerdown", (e) => {
+        if (!e.target.closest(".tool-wrapper")) {
+            closeAllPopovers();
+        }
+    });
+
+    // Hero Equipment Shortcut Dock Close & Click Isolation
+    const heroGearDock = document.getElementById("heroGearDock");
+    const heroGearCloseBtn = document.getElementById("heroGearCloseBtn");
+    if (heroGearDock) {
+        heroGearDock.addEventListener("mousedown", (e) => e.stopPropagation());
+        heroGearDock.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: true });
+    }
+    if (heroGearCloseBtn) {
+        heroGearCloseBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            hideHeroGearDock();
+        });
+    }
 
     // Background upload trigger
     const fileInput = document.getElementById("fileInput");
@@ -800,6 +1007,8 @@ function setupEventListeners() {
                 draw();
             }
         } else if (e.key === "Escape") {
+            closeAllPopovers();
+            if (typeof hideHeroGearDock === "function") hideHeroGearDock();
             selectedElement = null;
             arrowPreview = null;
             brushPreview = null;

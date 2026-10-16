@@ -21,6 +21,8 @@ let alignControlTarget = "image"; // "image" or "view" to toggle gesture target 
 let currentTool = Tools.SELECT;
 let currentColor = "#3b82f6"; // default royal blue
 let currentWidth = 2; // default thin/medium stroke (4px)
+let brushWidth = 2; // remembered brush thickness
+let arrowWidth = 4; // remembered arrow thickness
 let currentTextSize = 32;
 
 // Elements & History Stacks

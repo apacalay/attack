@@ -158,15 +158,12 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
     ctx.translate(x1, y1);
     ctx.rotate(angle);
 
-    // 1. High-contrast outer stroke (+2px white outline)
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = strokeW + 2;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(shaftEndDist, 0);
-    ctx.stroke();
+    // 1. Arrow shaft with smooth soft shadow (no jagged white border)
+    ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+    ctx.shadowBlur = Math.max(3, strokeW * 0.75);
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 1;
 
-    // 2. Colored inner shaft line
     ctx.strokeStyle = color;
     ctx.lineWidth = strokeW;
     ctx.beginPath();
@@ -174,7 +171,10 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
     ctx.lineTo(shaftEndDist, 0);
     ctx.stroke();
 
-    // 3. Arrowhead at tip (dist, 0)
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+
+    // 2. Arrowhead at tip (dist, 0)
     const tipX = dist;
     const baseLeftX = dist - headLength;
     const baseCenterX = dist - headLength * 0.65;
@@ -186,16 +186,17 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
     ctx.lineTo(baseLeftX, headWidth);
     ctx.closePath();
 
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
+    ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+    ctx.shadowBlur = 4;
     ctx.fillStyle = color;
     ctx.fill();
 
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+
     ctx.restore();
 
-    // 4. Highlight selection handles
+    // 3. Highlight selection handles
     if (isSelected) {
         ctx.save();
         ctx.strokeStyle = "rgba(0, 255, 255, 0.6)";
@@ -227,35 +228,80 @@ function drawArrow(x1, y1, x2, y2, color, width, isSelected) {
     }
 }
 
+// Chaikin's corner cutting algorithm for organic stroke smoothing
+function chaikinSmooth(pts, iterations = 2) {
+    if (!pts || pts.length <= 2) return pts;
+    let current = pts;
+    for (let it = 0; it < iterations; it++) {
+        const next = [current[0]];
+        for (let i = 0; i < current.length - 1; i++) {
+            const p0 = current[i];
+            const p1 = current[i + 1];
+            next.push({
+                x: 0.75 * p0.x + 0.25 * p1.x,
+                y: 0.75 * p0.y + 0.25 * p1.y
+            });
+            next.push({
+                x: 0.25 * p0.x + 0.75 * p1.x,
+                y: 0.25 * p0.y + 0.75 * p1.y
+            });
+        }
+        next.push(current[current.length - 1]);
+        current = next;
+    }
+    return current;
+}
+
 function drawBrush(points, color, width, isSelected) {
-    if (!points || points.length < 2) return;
+    if (!points || points.length === 0) return;
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
     const strokeW = width || 4;
 
-    // 1. White outer border outline
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = strokeW + 2;
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
+    if (points.length === 1) {
+        ctx.beginPath();
+        ctx.arc(points[0].x, points[0].y, strokeW / 2, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+        return;
     }
-    ctx.stroke();
 
-    // 2. Colored inner stroke
+    // Apply Chaikin corner-cutting smoothing to eliminate any angular bends
+    const smoothed = points.length > 2 ? chaikinSmooth(points, 2) : points;
+
+    // Draw continuous smooth spline curve
+    ctx.beginPath();
+    ctx.moveTo(smoothed[0].x, smoothed[0].y);
+
+    if (smoothed.length === 2) {
+        ctx.lineTo(smoothed[1].x, smoothed[1].y);
+    } else {
+        for (let i = 1; i < smoothed.length - 1; i++) {
+            const midX = (smoothed[i].x + smoothed[i + 1].x) / 2;
+            const midY = (smoothed[i].y + smoothed[i + 1].y) / 2;
+            ctx.quadraticCurveTo(smoothed[i].x, smoothed[i].y, midX, midY);
+        }
+        ctx.lineTo(smoothed[smoothed.length - 1].x, smoothed[smoothed.length - 1].y);
+    }
+
+    // Soft dark drop shadow for high contrast on map (completely eliminates harsh white jagged border!)
+    ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+    ctx.shadowBlur = Math.max(3, strokeW * 0.75);
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 1;
+
     ctx.strokeStyle = color;
     ctx.lineWidth = strokeW;
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
-    }
     ctx.stroke();
 
-    // 3. Selection outline
+    // Reset shadow
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+
+    // Selection outline
     if (isSelected) {
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         points.forEach(p => {
@@ -293,10 +339,15 @@ function drawCircle(x, y, color, radius, isSelected) {
     ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    // 3. Center Bullseye & Isometric Crosshair Dot
+    // 3. Center Bullseye & Isometric Crosshair Dot (no harsh white border)
     ctx.setLineDash([]);
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2.5;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 1;
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
     ctx.moveTo(x - 9, y);
     ctx.lineTo(x + 9, y);
@@ -304,23 +355,14 @@ function drawCircle(x, y, color, radius, isSelected) {
     ctx.lineTo(x, y + 9 * ISO_Y_RATIO);
     ctx.stroke();
 
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(x - 8, y);
-    ctx.lineTo(x + 8, y);
-    ctx.moveTo(x, y - 8 * ISO_Y_RATIO);
-    ctx.lineTo(x, y + 8 * ISO_Y_RATIO);
-    ctx.stroke();
-
     // Center point dot
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
 
     // 4. Selection Ring & Resize Handles (Left, Right, Top, Bottom)
     if (isSelected) {
@@ -375,19 +417,13 @@ function drawXMark(x, y, color, size, isSelected) {
     ctx.setLineDash([4, 4]);
     ctx.stroke();
 
-    // 2. White border outline for Plus (+) Crosshair
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = armW + 2.5;
+    // 2. Plus (+) Crosshair with soft ambient shadow (no harsh jagged white border!)
     ctx.setLineDash([]);
+    ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 1;
 
-    ctx.beginPath();
-    ctx.moveTo(x - halfX * 0.9, y);
-    ctx.lineTo(x + halfX * 0.9, y);
-    ctx.moveTo(x, y - halfY * 0.9);
-    ctx.lineTo(x, y + halfY * 0.9);
-    ctx.stroke();
-
-    // 3. Colored solid inner core
     ctx.strokeStyle = color;
     ctx.lineWidth = armW;
     ctx.beginPath();
@@ -398,10 +434,13 @@ function drawXMark(x, y, color, size, isSelected) {
     ctx.stroke();
 
     // Center Bullseye Dot
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
 
     // 4. Selection Box & Corner Resize Handles (Left, Right, Top, Bottom)
     if (isSelected) {
@@ -874,6 +913,74 @@ function drawGiantArrow(el, isSelected) {
     ctx.restore();
 }
 
+// Pre-calculated fan-out offset lookup tables for ultra-fast zero-lag execution on mobile
+const SPELL_FAN_OFFSETS = {
+    1: [{ dx: 50, dy: -50 }],
+    2: [
+        { dx: 52, dy: -50 },   // Top-Right
+        { dx: -52, dy: -50 }   // Top-Left
+    ],
+    3: [
+        { dx: 54, dy: -42 },   // Top-Right
+        { dx: 0, dy: -68 },    // Top-Center
+        { dx: -54, dy: -42 }   // Top-Left
+    ],
+    4: [
+        { dx: 52, dy: -48 },   // Top-Right
+        { dx: -52, dy: -48 },  // Top-Left
+        { dx: -52, dy: 46 },   // Bottom-Left
+        { dx: 52, dy: 46 }     // Bottom-Right
+    ]
+};
+
+function getSpellRenderCoords(el, allElements) {
+    const list = allElements || (typeof elements !== "undefined" ? elements : null);
+    if (!list || list.length === 0) {
+        return { x: el.x + 50, y: el.y - 50 };
+    }
+
+    // Find all spells / AoE elements in the same vicinity (within 35px of center drop point)
+    const cluster = [];
+    for (let i = 0; i < list.length; i++) {
+        const other = list[i];
+        if (other && other.type === Tools.ICON) {
+            const otherFolder = (other.folder || other.src || "").toLowerCase();
+            const otherKey = (other.name || "").toLowerCase().trim();
+            const isOtherSpell = otherFolder.includes("spell") || otherKey.includes("fireball") || otherKey.includes("fire_ball");
+            if (isOtherSpell) {
+                const dist = Math.hypot(other.x - el.x, other.y - el.y);
+                if (dist < 35) {
+                    cluster.push(other);
+                }
+            }
+        }
+    }
+
+    const count = cluster.length;
+    if (count <= 1) {
+        return { x: el.x + 50, y: el.y - 50 };
+    }
+
+    // Stable sort by orderNum or id so positions don't jump between frames
+    cluster.sort((a, b) => (a.orderNum || a.id || 0) - (b.orderNum || b.id || 0));
+    const index = cluster.findIndex(item => item.id === el.id);
+    const posIndex = index >= 0 ? index : 0;
+
+    // Use fast lookup table if <= 4 items
+    if (SPELL_FAN_OFFSETS[count] && SPELL_FAN_OFFSETS[count][posIndex]) {
+        const offset = SPELL_FAN_OFFSETS[count][posIndex];
+        return { x: el.x + offset.dx, y: el.y + offset.dy };
+    }
+
+    // Dynamic circle distribution for 5 or more spells in the same cluster
+    const radius = 68;
+    const angle = -Math.PI / 2 + (posIndex * 2 * Math.PI) / count;
+    return {
+        x: Math.round(el.x + Math.cos(angle) * radius),
+        y: Math.round(el.y + Math.sin(angle) * radius)
+    };
+}
+
 function drawUnitIcon(el, isSelected) {
     let img = imageCache.get(el.src);
 
@@ -906,8 +1013,9 @@ function drawUnitIcon(el, isSelected) {
     let renderY = el.y;
 
     if (isSpell && spellConfig) {
-        renderX = el.x + 50;
-        renderY = el.y - 50;
+        const spellCoords = getSpellRenderCoords(el, elements);
+        renderX = spellCoords.x;
+        renderY = spellCoords.y;
     }
 
     if (isDirectionalEquipment) {
@@ -947,8 +1055,9 @@ function drawUnitIcon(el, isSelected) {
         ctx.fill();
         ctx.restore();
     } else if (unitKey.includes("fireball") || unitKey.includes("fire_ball")) {
-        renderX = el.x + 50;
-        renderY = el.y - 50;
+        const spellCoords = getSpellRenderCoords(el, elements);
+        renderX = spellCoords.x;
+        renderY = spellCoords.y;
 
         const radiusX = (spellConfig ? spellConfig.radiusTiles : 6) * TILE_SCALE_X;
         const radiusY = (spellConfig ? spellConfig.radiusTiles : 6) * TILE_SCALE_Y;
@@ -1130,18 +1239,16 @@ function isClickOnElement(coords, el) {
 
         // Spell offset
         if (isSpell && spellConfig) {
-            const iconX = el.x + 50;
-            const iconY = el.y - 50;
-            if (Math.hypot(coords.x - iconX, coords.y - iconY) < (radius + 6)) return true;
+            const spellCoords = getSpellRenderCoords(el, elements);
+            if (Math.hypot(coords.x - spellCoords.x, coords.y - spellCoords.y) < (radius + 6)) return true;
             if (Math.hypot(coords.x - el.x, coords.y - el.y) < 22) return true;
             return false;
         }
 
         // Fireball offset
         if (unitKey.includes("fireball") || unitKey.includes("fire_ball")) {
-            const iconX = el.x + 50;
-            const iconY = el.y - 50;
-            if (Math.hypot(coords.x - iconX, coords.y - iconY) < (radius + 6)) return true;
+            const fireballCoords = getSpellRenderCoords(el, elements);
+            if (Math.hypot(coords.x - fireballCoords.x, coords.y - fireballCoords.y) < (radius + 6)) return true;
             if (Math.hypot(coords.x - el.x, coords.y - el.y) < 22) return true;
             return false;
         }

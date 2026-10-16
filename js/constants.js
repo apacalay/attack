@@ -104,3 +104,79 @@ const categoryIcons = {
     "Dark Spells": "ri-fire-line",
     "Super Troops": "ri-flashlight-line"
 };
+
+// Hero to Equipment Mappings for Quick Contextual Dock
+const HERO_EQUIPMENT_MAP = {
+    "barbarian king": {
+        heroName: "Barbarian King",
+        items: [
+            { name: "Barbarian Puppet", file: "Barbarian_Puppet.png" },
+            { name: "Rage Vial", file: "Rage_Vial.png" },
+            { name: "Earthquake Boots", file: "Earthquake_Boots.png" },
+            { name: "Vampstache", file: "Vampstache.png" },
+            { name: "Giant Gauntlet", file: "Giant_Gauntlet.png" },
+            { name: "Spiky Ball", file: "spiky_ball.png" },
+            { name: "Snake Bracelet", file: "snake_bracelet.png" },
+            { name: "Stick Horse", file: "stick_horse.png" }
+        ]
+    },
+    "archer queen": {
+        heroName: "Archer Queen",
+        items: [
+            { name: "Archer Puppet", file: "Archer_Puppet.png" },
+            { name: "Invisibility Vial", file: "Invisibility_Vial.png" },
+            { name: "Giant Arrow", file: "Giant_Arrow.png" },
+            { name: "Healer Puppet", file: "Healer_Puppet.png" },
+            { name: "Frozen Arrow", file: "frozen_arrow.png" },
+            { name: "Magic Mirror", file: "magic_mirror.png" },
+            { name: "Action Figure", file: "action_figure.png" },
+            { name: "Monolith Arrow", file: "Monolith_Arrow.webp" }
+        ]
+    },
+    "grand warden": {
+        heroName: "Grand Warden",
+        items: [
+            { name: "Eternal Tome", file: "Eternal_Tome.png" },
+            { name: "Life Gem", file: "Life_Gem.png" },
+            { name: "Rage Gem", file: "Rage_Gem.png" },
+            { name: "Healing Tome", file: "Healing_Tome.png" },
+            { name: "Fireball", file: "Fireball.png" },
+            { name: "Lavaloon Puppet", file: "lavaloon_puppet.png" },
+            { name: "Heroic Torch", file: "heroic_torch.png" }
+        ]
+    },
+    "royal champion": {
+        heroName: "Royal Champion",
+        items: [
+            { name: "Royal Gem", file: "Royal_Gem.png" },
+            { name: "Seeking Shield", file: "Seeking_Shield.png" },
+            { name: "Hog Rider Puppet", file: "Hog_Rider_Puppet.png" },
+            { name: "Haste Vial", file: "Haste_Vial.png" },
+            { name: "Rocket Spear", file: "rocket_spear.png" },
+            { name: "Electro Boots", file: "electro_boots.png" },
+            { name: "Frost Flake", file: "frost_flake.png" }
+        ]
+    },
+    "minion prince": {
+        heroName: "Minion Prince",
+        items: [
+            { name: "Henchmen Puppet", file: "henchmen_puppet.png" },
+            { name: "Dark Orb", file: "dark_orb.png" },
+            { name: "Metal Pants", file: "metal_pants.png" },
+            { name: "Noble Iron", file: "noble_iron.png" },
+            { name: "Dark Crown", file: "dark_crown.png" },
+            { name: "Meteor Staff", file: "meteor_staff.png" }
+        ]
+    },
+    "dragon duke": {
+        heroName: "Dragon Duke",
+        items: [
+            { name: "Fire Heart", file: "fire_heart.png" },
+            { name: "Flame Blower", file: "flame_blower.png" },
+            { name: "Stun Blaster", file: "stun_blaster.png" },
+            { name: "Electro Fangs", file: "electro_fangs.webp" },
+            { name: "Rocket Backpack", file: "rocket_backpacks.webp" },
+            { name: "Revenge Deck", file: "Revenge_Deck.webp" }
+        ]
+    }
+};
