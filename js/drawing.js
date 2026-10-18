@@ -339,25 +339,15 @@ function drawCircle(x, y, color, radius, isSelected) {
     ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    // 3. Center Bullseye & Isometric Crosshair Dot (no harsh white border)
+    // 3. Center Point Dot (thin dot without crosshair)
     ctx.setLineDash([]);
     ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
-    ctx.shadowBlur = 3;
+    ctx.shadowBlur = 2;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 1;
 
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.moveTo(x - 9, y);
-    ctx.lineTo(x + 9, y);
-    ctx.moveTo(x, y - 9 * ISO_Y_RATIO);
-    ctx.lineTo(x, y + 9 * ISO_Y_RATIO);
-    ctx.stroke();
-
-    // Center point dot
-    ctx.beginPath();
-    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
 
@@ -470,28 +460,79 @@ function drawXMark(x, y, color, size, isSelected) {
     ctx.restore();
 }
 
+function getTextLayout(ctx, text, fontSize) {
+    const size = fontSize || 20;
+    ctx.font = `600 ${size}px 'Outfit', 'Inter', -apple-system, sans-serif`;
+    const lines = String(text || "").split("\n");
+    // Line height: distance from line 1 to line 2 (1.15x is compact and avoids overlapping)
+    const lineHeight = Math.round(size * 0.9);
+
+    let maxW = 0;
+    lines.forEach(l => {
+        const w = ctx.measureText(l).width;
+        if (w > maxW) maxW = w;
+    });
+
+    const padX = 8;
+    const padY = 5;
+    const boxW = Math.round(maxW + padX * 2);
+    const boxH = Math.round(lines.length * lineHeight + padY * 2 - (lineHeight - size));
+
+    return { size, lines, lineHeight, padX, padY, boxW, boxH };
+}
+
 function drawText(text, x, y, color, fontSize, isSelected) {
+    if (!text) return;
     ctx.save();
 
-    ctx.font = `bold ${fontSize}px sans-serif`;
+    const { lines, lineHeight, padX, padY, boxW, boxH } = getTextLayout(ctx, text, fontSize);
     ctx.textBaseline = "top";
     ctx.textAlign = "left";
 
-    const textWidth = ctx.measureText(text).width;
-    const h = fontSize + 8;
+    const boxX = x - padX;
+    const boxY = y - padY;
 
-    // Semi-transparent dark background for readability
-    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
-    ctx.fillRect(x - 6, y - 4, textWidth + 12, h);
+    // Subtle, clean, rounded translucent card (not thick or harsh)
+    ctx.fillStyle = "rgba(11, 15, 23, 0.65)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+    ctx.lineWidth = 1;
+
+    if (typeof ctx.roundRect === "function") {
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 6);
+        ctx.fill();
+        ctx.stroke();
+    } else {
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+    }
+
+    // Soft readability shadow for text
+    ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 1;
 
     ctx.fillStyle = color;
-    ctx.fillText(text, x, y);
+    lines.forEach((line, index) => {
+        ctx.fillText(line, x, y + index * lineHeight);
+    });
 
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+
+    // Selection highlight
     if (isSelected) {
         ctx.strokeStyle = "#00ffff";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 4]);
-        ctx.strokeRect(x - 8, y - 6, textWidth + 16, h + 4);
+        if (typeof ctx.roundRect === "function") {
+            ctx.beginPath();
+            ctx.roundRect(boxX - 3, boxY - 3, boxW + 6, boxH + 6, 8);
+            ctx.stroke();
+        } else {
+            ctx.strokeRect(boxX - 3, boxY - 3, boxW + 6, boxH + 6);
+        }
     }
 
     ctx.restore();
@@ -747,7 +788,7 @@ function drawGiantArrow(el, isSelected) {
 
     // 2. Dashed Outer Border Lines
     ctx.strokeStyle = "rgba(56, 189, 248, 0.95)";
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = 1;
     ctx.setLineDash([8, 6]);
     ctx.beginPath();
     ctx.moveTo(p0Left.x, p0Left.y);
@@ -758,32 +799,14 @@ function drawGiantArrow(el, isSelected) {
 
     // 3. Centerline Trajectory
     ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     ctx.setLineDash([10, 6]);
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(pShaftCenter.x, pShaftCenter.y);
     ctx.stroke();
 
-    // 4. Direction flow indicator chevrons
-    ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(6, 182, 212, 0.9)";
-    for (let d = 2.0; d < shaftLengthTiles - 0.5; d += 3.0) {
-        const tip = getGroundScreenPos(d + 0.6, 0);
-        const leftWing = getGroundScreenPos(d - 0.3, -halfWidthTiles * 0.55);
-        const notch = getGroundScreenPos(d - 0.05, 0);
-        const rightWing = getGroundScreenPos(d - 0.3, halfWidthTiles * 0.55);
-
-        ctx.beginPath();
-        ctx.moveTo(tip.x, tip.y);
-        ctx.lineTo(leftWing.x, leftWing.y);
-        ctx.lineTo(notch.x, notch.y);
-        ctx.lineTo(rightWing.x, rightWing.y);
-        ctx.closePath();
-        ctx.fill();
-    }
-
-    // 5. Arrowhead at tip (x2, y2)
+    // 4. Arrowhead at tip (x2, y2)
     const pTip = { x: x2, y: y2 };
     const headWidthTiles = halfWidthTiles * 2.5;
     const pHeadBaseLeft = getGroundScreenPos(distTiles - headLengthTiles, -headWidthTiles / 2);
@@ -803,12 +826,12 @@ function drawGiantArrow(el, isSelected) {
     ctx.fillStyle = headGrad;
     ctx.fill();
     ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     ctx.restore();
 
-    // 6. Backward Offset for Queen / Giant Arrow Icon (placed behind drop point x1, y1)
+    // 5. Backward Offset for Queen / Giant Arrow Icon (placed behind drop point x1, y1)
     const angle = Math.atan2(dy, dx);
     const offsetDist = 50;
     const iconX = x1 - Math.cos(angle) * offsetDist;
@@ -820,28 +843,12 @@ function drawGiantArrow(el, isSelected) {
     ctx.moveTo(iconX, iconY);
     ctx.lineTo(x1, y1);
     ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
     ctx.stroke();
     ctx.restore();
 
-    // 7. Drop Pin Indicator at (x1, y1)
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x1, y1, 6, 0, Math.PI * 2);
-    ctx.fillStyle = "#00ffff";
-    ctx.fill();
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(x1, y1, 2.2, 0, Math.PI * 2);
-    ctx.fillStyle = "#ffffff";
-    ctx.fill();
-    ctx.restore();
-
-    // 8. Render Archer Queen / Giant Arrow Icon
+    // 6. Render Archer Queen / Giant Arrow Icon
     let img = imageCache.get(el.src);
     if (!img) {
         img = new Image();
@@ -892,7 +899,7 @@ function drawGiantArrow(el, isSelected) {
     ctx.textBaseline = "middle";
     ctx.fillText(String(el.orderNum), badgeX, badgeY);
 
-    // 9. Selection handles
+    // 7. Selection handles
     if (isSelected) {
         ctx.beginPath();
         ctx.arc(x1, y1, 9, 0, Math.PI * 2);
@@ -1036,23 +1043,9 @@ function drawUnitIcon(el, isSelected) {
         ctx.moveTo(renderX, renderY);
         ctx.lineTo(el.x, el.y);
         ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
-        ctx.lineWidth = 1.8;
+        ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         ctx.stroke();
-
-        // Drop pin at drop point
-        ctx.beginPath();
-        ctx.arc(el.x, el.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = "#f97316";
-        ctx.fill();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(el.x, el.y, 2.2, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
         ctx.restore();
     } else if (unitKey.includes("fireball") || unitKey.includes("fire_ball")) {
         const spellCoords = getSpellRenderCoords(el, elements);
@@ -1079,32 +1072,15 @@ function drawUnitIcon(el, isSelected) {
         ctx.moveTo(renderX, renderY);
         ctx.lineTo(el.x, el.y);
         ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
-        ctx.lineWidth = 1.8;
+        ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         ctx.stroke();
 
-        // 3. Center Target Crosshair
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
-        ctx.lineWidth = 1.8;
+        // 3. Center Point Dot (thin dot without crosshair/plus)
         ctx.setLineDash([]);
         ctx.beginPath();
-        ctx.moveTo(el.x - 12, el.y);
-        ctx.lineTo(el.x + 12, el.y);
-        ctx.moveTo(el.x, el.y - 12);
-        ctx.lineTo(el.x, el.y + 12);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(el.x, el.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = "#f97316";
-        ctx.fill();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(el.x, el.y, 2.2, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff";
+        ctx.arc(el.x, el.y, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = spellConfig ? spellConfig.stroke : "#f97316";
         ctx.fill();
 
         ctx.restore();
@@ -1129,29 +1105,16 @@ function drawUnitIcon(el, isSelected) {
         ctx.moveTo(renderX, renderY);
         ctx.lineTo(el.x, el.y);
         ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
-        ctx.lineWidth = 1.8;
+        ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         ctx.stroke();
 
-        // 3. Center Target Crosshair
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.lineWidth = 1.5;
+        // 3. Center Point Dot (thin dot without crosshair/plus)
         ctx.setLineDash([]);
         ctx.beginPath();
-        ctx.moveTo(el.x - 10, el.y);
-        ctx.lineTo(el.x + 10, el.y);
-        ctx.moveTo(el.x, el.y - 10);
-        ctx.lineTo(el.x, el.y + 10);
-        ctx.stroke();
-
-        // 4. Center Target Dot
-        ctx.beginPath();
-        ctx.arc(el.x, el.y, 4, 0, Math.PI * 2);
+        ctx.arc(el.x, el.y, 2.5, 0, Math.PI * 2);
         ctx.fillStyle = spellConfig.stroke;
         ctx.fill();
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
 
         ctx.restore();
     }
@@ -1283,11 +1246,12 @@ function isClickOnElement(coords, el) {
     }
 
     if (el.type === Tools.TEXT) {
-        ctx.font = `bold ${el.fontSize}px sans-serif`;
-        const textWidth = ctx.measureText(el.text).width;
-        const h = el.fontSize + 12;
-        return coords.x >= el.x - 12 && coords.x <= el.x + textWidth + 12 &&
-            coords.y >= el.y - 12 && coords.y <= el.y + h + 12;
+        const { padX, padY, boxW, boxH } = getTextLayout(ctx, el.text, el.fontSize);
+        const boxX = el.x - padX;
+        const boxY = el.y - padY;
+
+        return coords.x >= boxX - 6 && coords.x <= boxX + boxW + 6 &&
+            coords.y >= boxY - 6 && coords.y <= boxY + boxH + 6;
     }
 
     if (el.type === "giant_arrow") {

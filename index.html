@@ -199,7 +199,8 @@
                         <button class="welcome-btn" id="welcomeChooseBtn">
                             <i class="ri-folder-open-line"></i> Choose Image
                         </button>
-                        <button class="welcome-btn welcome-btn-secondary" id="welcomePasteBtn" title="Paste Image from Clipboard">
+                        <button class="welcome-btn welcome-btn-secondary" id="welcomePasteBtn"
+                            title="Paste Image from Clipboard">
                             <i class="ri-clipboard-line"></i> Paste Image
                         </button>
                     </div>
@@ -238,14 +239,17 @@
                     <i class="ri-drag-move-2-line"></i>
                     <span>Align Mode:</span>
                     <div class="align-target-toggle">
-                        <button class="toggle-pill active" id="alignTargetImage" title="Drag & zoom base screenshot">Base Image</button>
-                        <button class="toggle-pill" id="alignTargetCanvas" title="Drag & zoom entire viewport to inspect corners">Workspace</button>
+                        <button class="toggle-pill active" id="alignTargetImage"
+                            title="Drag & zoom base screenshot">Base Image</button>
+                        <button class="toggle-pill" id="alignTargetCanvas"
+                            title="Drag & zoom entire viewport to inspect corners">Workspace</button>
                     </div>
                 </div>
                 <div class="floater zoom-button-group">
                     <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out (-1%, Shift for -5%)"><i
                             class="ri-subtract-line"></i></button>
-                    <span class="zoom-value" id="zoomPercentage" title="Current Zoom Percentage (Click to reset 100%)">100%</span>
+                    <span class="zoom-value" id="zoomPercentage"
+                        title="Current Zoom Percentage (Click to reset 100%)">100%</span>
                     <button class="zoom-btn" id="zoomResetBtn" title="Fit to Screen"><i class="ri-fullscreen-line"></i>
                         Fit</button>
                     <button class="zoom-btn" id="zoomInBtn" title="Zoom In (+1%, Shift for +5%)"><i
@@ -255,11 +259,12 @@
 
             <!-- Popover Text Input -->
             <div class="text-popover" id="textPopover">
-                <input type="text" id="popoverInput" placeholder="Write tactical note..." />
-                <button class="btn btn-primary" id="popoverSave" style="padding: 6px 12px;"><i
-                        class="ri-check-line"></i></button>
-                <button class="btn" id="popoverCancel" style="padding: 6px 12px;"><i
-                        class="ri-close-line"></i></button>
+                <textarea id="popoverInput" rows="2" placeholder="Write note..."></textarea>
+                <div class="text-popover-actions">
+                    <button class="btn btn-primary" id="popoverSave" title="Save Note (Ctrl+Enter)"><i
+                            class="ri-check-line"></i></button>
+                    <button class="btn" id="popoverCancel" title="Cancel (Esc)"><i class="ri-close-line"></i></button>
+                </div>
             </div>
         </main>
 

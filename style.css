@@ -916,6 +916,12 @@ canvas {
     z-index: 2;
 }
 
+.gear-item-btn.equipped {
+    background: rgba(6, 182, 212, 0.25);
+    border-color: #00ffff;
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.45);
+}
+
 .gear-item-btn:active {
     transform: scale(0.94);
 }
@@ -1024,29 +1030,44 @@ canvas {
 /* Text Input Popover */
 .text-popover {
     position: fixed;
-    background-color: var(--bg-panel);
+    background-color: rgba(17, 23, 38, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-color);
     padding: 8px;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75), 0 0 14px rgba(0, 0, 0, 0.4);
     display: none;
     z-index: 1000;
-    gap: 6px;
+    gap: 8px;
+    align-items: flex-start;
     transform: translate(-50%, -120%);
 }
 
-.text-popover input {
+.text-popover textarea {
     background-color: var(--bg-input);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    padding: 6px 10px;
-    border-radius: 4px;
+    padding: 8px 10px;
+    border-radius: 6px;
     font-size: 0.875rem;
+    font-family: 'Outfit', 'Inter', sans-serif;
     outline: none;
+    resize: none;
+    width: 220px;
+    min-height: 54px;
+    line-height: 1.4;
+    transition: border-color 0.15s ease;
 }
 
-.text-popover input:focus {
+.text-popover textarea:focus {
     border-color: var(--accent-color);
+}
+
+.text-popover-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 /* Instructions Modal */

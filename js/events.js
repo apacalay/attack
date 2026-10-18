@@ -423,8 +423,29 @@ function handleMouseMove(e) {
                 p.y += dy;
             });
         } else {
-            selectedElement.x = coords.x - dragOffset.x;
-            selectedElement.y = coords.y - dragOffset.y;
+            const nextX = coords.x - dragOffset.x;
+            const nextY = coords.y - dragOffset.y;
+            const moveDx = nextX - selectedElement.x;
+            const moveDy = nextY - selectedElement.y;
+            selectedElement.x = nextX;
+            selectedElement.y = nextY;
+
+            // Move attached equipment along with the hero
+            if (selectedElement.id && (moveDx !== 0 || moveDy !== 0)) {
+                elements.forEach(el => {
+                    if (el.heroId === selectedElement.id) {
+                        if (el.type === "giant_arrow") {
+                            el.x1 += moveDx;
+                            el.y1 += moveDy;
+                            el.x2 += moveDx;
+                            el.y2 += moveDy;
+                        } else if (el.x !== undefined && el.y !== undefined) {
+                            el.x += moveDx;
+                            el.y += moveDy;
+                        }
+                    }
+                });
+            }
         }
         draw();
     }
@@ -544,6 +565,19 @@ function getHeroKey(el) {
     return null;
 }
 
+function getEquippedGearsForHero(heroEl) {
+    if (!heroEl) return [];
+    return elements.filter(el => {
+        if (!el || (el.type !== Tools.ICON && el.type !== "giant_arrow")) return false;
+        const f = (el.folder || el.src || "").toLowerCase();
+        const isEq = f.includes("equipment");
+        if (!isEq) return false;
+        if (el.heroId && heroEl.id && el.heroId === heroEl.id) return true;
+        const dist = Math.hypot((el.x !== undefined ? el.x : el.x1) - heroEl.x, (el.y !== undefined ? el.y : el.y1) - heroEl.y);
+        return dist < 80;
+    });
+}
+
 function showHeroGearDock(heroEl) {
     const heroKey = getHeroKey(heroEl);
     if (!heroKey || !HERO_EQUIPMENT_MAP[heroKey]) {
@@ -559,13 +593,17 @@ function showHeroGearDock(heroEl) {
 
     if (!dock || !title || !itemsContainer) return;
 
-    title.innerHTML = `<i class="ri-vip-crown-2-line"></i> ${heroConfig.heroName}`;
+    title.textContent = heroConfig.heroName;
     itemsContainer.innerHTML = "";
+
+    const equippedGears = getEquippedGearsForHero(heroEl);
+    const equippedNames = equippedGears.map(g => g.name);
 
     heroConfig.items.forEach(gear => {
         const btn = document.createElement("button");
-        btn.className = "gear-item-btn";
-        btn.title = gear.name;
+        const isEquipped = equippedNames.includes(gear.name);
+        btn.className = "gear-item-btn" + (isEquipped ? " equipped" : "");
+        btn.title = gear.name + (isEquipped ? " (Equipped - Click to remove)" : "");
         btn.innerHTML = `<img src="assets/Hereos Equipment/${gear.file}" alt="${gear.name}" loading="lazy" />`;
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -585,29 +623,55 @@ function hideHeroGearDock() {
 
 function equipGearToHero(heroEl, gear) {
     if (!heroEl) return;
+    if (!heroEl.id) heroEl.id = Date.now() + Math.random();
 
-    // Count existing equipment attached to or near this hero
-    const existingGears = elements.filter(el => {
-        if (!el || (el.type !== Tools.ICON && el.type !== "giant_arrow")) return false;
-        const f = (el.folder || el.src || "").toLowerCase();
-        const isEq = f.includes("equipment");
-        const dist = Math.hypot((el.x !== undefined ? el.x : el.x1) - heroEl.x, (el.y !== undefined ? el.y : el.y1) - heroEl.y);
-        return isEq && dist < 120;
-    });
+    const existingGears = getEquippedGearsForHero(heroEl);
 
-    const gearIndex = existingGears.length;
-    // Sequential offset positions around hero:
-    // 1st: Right-side (+40, -8)
-    // 2nd: Left-side  (-40, -8)
-    // 3rd: Top-side   (0, -46)
-    // 4th: Bottom-side(0, +38)
+    // 1. If already equipped -> unequip it (toggle off)
+    const existingIndex = existingGears.findIndex(el => el.name === gear.name);
+    if (existingIndex !== -1) {
+        const gearToRemove = existingGears[existingIndex];
+        const elIdx = elements.indexOf(gearToRemove);
+        if (elIdx !== -1) {
+            elements.splice(elIdx, 1);
+            saveState();
+            draw();
+            showHeroGearDock(heroEl);
+            if (typeof showActionToast === "function") {
+                showActionToast(`${gear.name} unequipped!`);
+            }
+        }
+        return;
+    }
+
+    // 2. Enforce maximum 2 equipment per hero
+    if (existingGears.length >= 2) {
+        if (typeof showActionToast === "function") {
+            showActionToast("Hero can only equip up to 2 items!", false);
+        }
+        return;
+    }
+
+    // 3. Side-by-side horizontal positioning, externally tangent to the hero's circle border
+    // Distance from hero center = sqrt(26^2 + 43^2) ≈ 50.2px (R_hero 25 + R_gear 25)
+    // Slot 1: Bottom-left (dx: -26, dy: 43)
+    // Slot 2: Bottom-right (dx: 26, dy: 43)
     const gearOffsets = [
-        { dx: 40, dy: -8 },
-        { dx: -40, dy: -8 },
-        { dx: 0, dy: -46 },
-        { dx: 0, dy: 38 }
+        { dx: -26, dy: 43 },
+        { dx: 26, dy: 43 }
     ];
-    const offset = gearOffsets[gearIndex % gearOffsets.length];
+
+    let offset = gearOffsets[0];
+    if (existingGears.length === 1) {
+        const firstGear = existingGears[0];
+        // If first gear is on the left, place second on the right, and vice-versa
+        if (firstGear.x !== undefined && firstGear.x < heroEl.x) {
+            offset = gearOffsets[1];
+        } else {
+            offset = gearOffsets[0];
+        }
+    }
+
     const targetX = Math.round(heroEl.x + offset.dx);
     const targetY = Math.round(heroEl.y + offset.dy);
 
@@ -620,6 +684,7 @@ function equipGearToHero(heroEl, gear) {
         const angle = (defaultDx === 0 && defaultDy === 0) ? 0 : Math.atan2(defaultDy, defaultDx);
         newElement = {
             id: Date.now() + Math.random(),
+            heroId: heroEl.id,
             type: "giant_arrow",
             x1: heroEl.x,
             y1: heroEl.y,
@@ -633,6 +698,7 @@ function equipGearToHero(heroEl, gear) {
     } else {
         newElement = {
             id: Date.now() + Math.random(),
+            heroId: heroEl.id,
             type: Tools.ICON,
             x: targetX,
             y: targetY,
@@ -646,6 +712,7 @@ function equipGearToHero(heroEl, gear) {
     elements.push(newElement);
     saveState();
     draw();
+    showHeroGearDock(heroEl);
 
     if (typeof showActionToast === "function") {
         showActionToast(`${gear.name} equipped!`);
@@ -964,7 +1031,7 @@ function setupEventListeners() {
 
     if (popoverInput) {
         popoverInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
                 submitPopoverText();
             } else if (e.key === "Escape") {
@@ -986,7 +1053,7 @@ function setupEventListeners() {
 
     // Keyboard Shortcuts
     window.addEventListener("keydown", (e) => {
-        if (document.activeElement.tagName === "INPUT") return;
+        if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA") return;
 
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
             if (window.getSelection && window.getSelection().toString().length > 0) return;
@@ -1001,8 +1068,10 @@ function setupEventListeners() {
         } else if (e.key === "Delete" || e.key === "Backspace") {
             if (selectedElement) {
                 e.preventDefault();
-                elements = elements.filter(el => el.id !== selectedElement.id);
+                const selId = selectedElement.id;
+                elements = elements.filter(el => el.id !== selId && el.heroId !== selId);
                 selectedElement = null;
+                if (typeof hideHeroGearDock === "function") hideHeroGearDock();
                 saveState();
                 draw();
             }
